@@ -13,63 +13,23 @@ from typing import List, Dict, Tuple, Optional, Set
 
 # Local imports
 from ..logs import logging
-from .tool_box import create_directory
+from .grid_environment import make
 
-class DP(object):
+class DP():
     def __init__(
-        self, grid_row:int = 3, grid_col:int = 4, 
-        terminal_states:Dict = None, step_cost:float = -1, gamma:float = 0.5, 
-        walls:List[Tuple] = None, noise:float = .0, epsilon:float = 1e-4, initial_state:tuple = (0,0),
-        images_dir:str = 'images', plot_name:str = 'grid_world'
+        self, env, step_cost:float = -1, gamma:float = 0.5, 
+        noise:float = .0, epsilon:float = 1e-4
         ):
         """
         Initializes the grid world
         """
-        if terminal_states is None:
-            terminal_states = {(0, 3): 1, (1, 3): -10}
-
-        # Initialize the grid environment
-        self.grid_row = grid_row
-        self.grid_col = grid_col
-        self.grid = np.zeros((self.grid_row, self.grid_col))
-
-        # States set up
-        ## A list of all possible states
-        self.all_states = list(product(*[range(self.grid_row),range(self.grid_col)]))
-        ## A list of all states the agent can be in
-        self.available_states = list(product(*[range(self.grid_row),range(self.grid_col)]))
-
-        # Adding terminal states
-        self.terminal_states_list = []
-        for key in terminal_states:
-            self.terminal_states_list.append(key)
-            self.available_states.remove(key)
-            self.grid[key] = terminal_states[key]
-
-        # Adding walls
-        self.wall_states_list = []
-        if walls is not None:
-            for wall in walls:
-                self.wall_states_list.append(wall)
-                self.available_states.remove(wall)
-                self.grid[wall] = np.nan
-
-        # Action set up
-        self.possible_actions = ['U', 'D', 'L', 'R']
-        self.action_space = {'U': (-1,0), 'D': (1,0), 'L': (0,-1), 'R': (0,1)}
-        # self.action_prob = 0.25
-
         # Agent position and reward set up
-        self.agent_state = initial_state
-        self.initial_state = initial_state
         self.step_cost = step_cost
         self.gamma = gamma
         self.epsilon = epsilon
         self.noise = noise
-        self.images_dir = images_dir
-        create_directory(directory_path = self.images_dir)
-        self.plot_name = plot_name
-    
+        self.env = env
+
     def prob_of_action(self, action:str):
         """
         Returns the probability of taking an action
@@ -83,61 +43,29 @@ class DP(object):
             'R': {'R':correct, 'U':wrong, 'D':wrong},
             }[action]
 
-    def render_state_value(self):
-        """
-        Renders the grid world
-        """
-        for row in range(len(self.grid)):
-            print("--------"*self.grid_col)
-            for col in range(len(self.grid[row])):
-                value = self.grid[row, col]
-                if col == 0:
-                    print("| {0:.2f} |".format(value), end="")
-                else:
-                    print(" {0:.2f} |".format(value), end="")
-            print("")
-        print("--------"*self.grid_col)
- 
-    def is_terminal_state(self, state):
-        """ Returns true if the state is a terminal state"""
-        return state in self.terminal_states_list
-
-    def new_state_given_action(self, state, action):
-        """ Given a state and an action, returns the new state """
-        new_state = tuple(map(sum, zip(state, self.action_space[action]))) # new state given action
-        ## Bump into wall or border
-        if new_state in self.wall_states_list or new_state not in self.all_states:
-            return state
-        ## if new state is terminal state
-        elif self.is_terminal_state(new_state):
-            return new_state
-        ## if new state is a valid state
-        else:
-            return new_state
-
-    def get_sweep(self, method:str):
-        new_grid = self.grid.copy()
-        for state in self.available_states:
+    def get_sweep(self):
+        new_grid = self.env.grid.copy()
+        for state in self.env.available_states:
             exploration = []
-            for action in self.possible_actions:
+            
+            for action in self.env.possible_actions:
                 possible_move = self.prob_of_action(action)
 
                 exploration.append(
                     sum(
-                        self.grid[self.new_state_given_action(state, move)]*possible_move.get(move)
+                        self.env.grid[self.env.new_state_given_action(state, move)]*possible_move.get(move)
                         for move in possible_move
                         )
                 )
 
-            option_results = pd.DataFrame([exploration], columns=self.possible_actions)
+            option_results = pd.DataFrame([exploration], columns=self.env.possible_actions)
 
-            if method=='DP':
-                new_grid[state] = self.step_cost + self.gamma*\
-                    option_results[option_results.idxmax(axis=1)[0]][0]
+            new_grid[state] = self.step_cost + self.gamma*\
+                option_results[option_results.idxmax(axis=1)[0]][0]
 
-        if np.array_equal(new_grid, self.grid):
+        if np.array_equal(new_grid, self.env.grid):
             return new_grid, True
-        elif np.nansum(np.abs(new_grid - self.grid)) < self.epsilon :
+        elif np.nansum(np.abs(new_grid - self.env.grid)) < self.epsilon :
             return new_grid, True
         else:
             return new_grid, False
@@ -146,5 +74,11 @@ class DP(object):
     def compute_state_value(self):
         done = False
         while not done:
-            self.grid, done = self.get_sweep(method='DP')       
+            self.env.grid, done = self.get_sweep()
+        return self.env.grid
 
+    def draw_state_value(self):
+        self.env.draw_state_value()
+
+    def drew_policy(self):
+        self.env.drew_policy()

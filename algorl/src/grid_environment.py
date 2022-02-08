@@ -15,11 +15,10 @@ from typing import List, Dict, Tuple, Optional, Set
 from ..logs import logging
 from .tool_box import create_directory
 
-class make(object):
+class make():
     def __init__(
         self, grid_row:int = 3, grid_col:int = 4, 
-        terminal_states:Dict = None, step_cost:float = -1, gamma:float = 0.5, 
-        walls:List[Tuple] = None, noise:float = .0, epsilon:float = 1e-4, initial_state:tuple = (0,0),
+        terminal_states:Dict = None, walls:List[Tuple] = None, initial_state:tuple = (0,0),
         images_dir:str = 'images', plot_name:str = 'grid_world'
         ):
         """
@@ -62,26 +61,10 @@ class make(object):
         # Agent position and reward set up
         self.agent_state = initial_state
         self.initial_state = initial_state
-        self.step_cost = step_cost
-        self.gamma = gamma
-        self.epsilon = epsilon
-        self.noise = noise
         self.images_dir = images_dir
         create_directory(directory_path = self.images_dir)
         self.plot_name = plot_name
-    
-    def prob_of_action(self, action:str):
-        """
-        Returns the probability of taking an action
-        """
-        correct = 1 - self.noise
-        wrong = self.noise/2
-        return {
-            'U': {'U':correct, 'L':wrong, 'R':wrong}, 
-            'D': {'D':correct, 'L':wrong, 'R':wrong},
-            'L': {'L':correct, 'U':wrong, 'D':wrong},
-            'R': {'R':correct, 'U':wrong, 'D':wrong},
-            }[action]
+
 
     def reset(self):
         """
@@ -90,6 +73,7 @@ class make(object):
         self.agent_state = self.initial_state
         self.grid = np.zeros((self.grid_row, self.grid_col))
         return self.agent_state
+
 
     def render_state_value(self):
         """
@@ -105,6 +89,7 @@ class make(object):
                     print(" {0:.2f} |".format(value), end="")
             print("")
         print("--------"*self.grid_col)
+
 
     def _drew_grid(self, tb, width, height, ax):
         for i in range(self.grid_row):
@@ -137,6 +122,7 @@ class make(object):
 
         self._drew_grid(tb, width, height, ax)
         plt.savefig(Path(self.images_dir, self.plot_name+'_policy.png'), dpi=300)
+
 
     def drew_policy(self):
         arrow_symbols = {'U':'\u2191', 'D':'\u2193', 'L':'\u2190', 'R':'\u2192'}
@@ -171,10 +157,7 @@ class make(object):
 
         self._drew_grid(tb, width, height, ax)
         plt.savefig(Path(self.images_dir, self.plot_name+'_state_values.png'), dpi=300)
-                
-    def is_terminal_state(self, state):
-        """ Returns true if the state is a terminal state"""
-        return state in self.terminal_states_list
+
 
     def new_state_given_action(self, state, action):
         """ Given a state and an action, returns the new state """
@@ -189,36 +172,7 @@ class make(object):
         else:
             return new_state
 
-    def get_sweep(self, method:str):
-        new_grid = self.grid.copy()
-        for state in self.available_states:
-            exploration = []
-            for action in self.possible_actions:
-                possible_move = self.prob_of_action(action)
 
-                exploration.append(
-                    sum(
-                        self.grid[self.new_state_given_action(state, move)]*possible_move.get(move)
-                        for move in possible_move
-                        )
-                )
-
-            option_results = pd.DataFrame([exploration], columns=self.possible_actions)
-
-            if method=='DP':
-                new_grid[state] = self.step_cost + self.gamma*\
-                    option_results[option_results.idxmax(axis=1)[0]][0]
-
-        if np.array_equal(new_grid, self.grid):
-            return new_grid, True
-        elif np.nansum(np.abs(new_grid - self.grid)) < self.epsilon :
-            return new_grid, True
-        else:
-            return new_grid, False
-
-    
-    def compute_state_value(self):
-        done = False
-        while not done:
-            self.grid, done = self.get_sweep(method='DP')       
-
+    def is_terminal_state(self, state):
+        """ Returns true if the state is a terminal state"""
+        return state in self.terminal_states_list
