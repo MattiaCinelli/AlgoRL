@@ -1,0 +1,46 @@
+wheel
+setuptools
+tox
+
+# Computational
+numpy
+pandas
+scipy
+
+# Graphics
+matplotlib
+seaborn
+
+# ML
+scipy
+scikit-learn
+# tensorflow
+# keras
+
+# Structure
+typing
+mypy
+
+# Notebook
+ipykernel
+
+# Debugging
+icecream
+
+# Formating
+black 
+
+# Coverage
+coverage 
+
+# Code quality
+flake8 
+mccabe 
+pylint 
+
+# Testing
+pytest 
+
+# Terminal
+rich
+chime
