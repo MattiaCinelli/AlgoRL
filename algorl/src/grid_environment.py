@@ -15,11 +15,11 @@ from typing import List, Dict, Tuple, Optional, Set
 from ..logs import logging
 from .tool_box import create_directory
 
-class make():
+class Make():
     def __init__(
         self, grid_row:int = 3, grid_col:int = 4, 
         terminal_states:Dict = None, walls:List[Tuple] = None, initial_state:tuple = (0,0),
-        images_dir:str = 'images', plot_name:str = 'grid_world'
+        images_dir:str = 'images'
         ):
         """
         Initializes the grid world
@@ -56,15 +56,12 @@ class make():
         # Action set up
         self.possible_actions = ['U', 'D', 'L', 'R']
         self.action_space = {'U': (-1,0), 'D': (1,0), 'L': (0,-1), 'R': (0,1)}
-        # self.action_prob = 0.25
 
         # Agent position and reward set up
         self.agent_state = initial_state
         self.initial_state = initial_state
         self.images_dir = images_dir
         create_directory(directory_path = self.images_dir)
-        self.plot_name = plot_name
-
 
     def reset(self):
         """
@@ -100,8 +97,8 @@ class make():
         ax.add_table(tb)
         
 
-    def draw_state_value(self):
-        fig, ax = plt.subplots()
+    def draw_state_value(self, plot_name:str):
+        _, ax = plt.subplots()
         ax.set_axis_off()
         tb = Table(ax, bbox=[0, 0, 1, 1])
 
@@ -121,10 +118,10 @@ class make():
                 tb.add_cell(i, j, width, height, text=np.round(val, 2), loc='center', facecolor='white')
 
         self._drew_grid(tb, width, height, ax)
-        plt.savefig(Path(self.images_dir, self.plot_name+'_policy.png'), dpi=300)
+        plt.savefig(Path(self.images_dir, plot_name+'_policy.png'), dpi=300)
 
 
-    def drew_policy(self):
+    def drew_policy(self, plot_name:str):
         arrow_symbols = {'U':'\u2191', 'D':'\u2193', 'L':'\u2190', 'R':'\u2192'}
         fig, ax = plt.subplots()
         ax.set_axis_off()
@@ -156,7 +153,7 @@ class make():
                 tb.add_cell(i, j, width, height, text=arrows, loc='center', facecolor='white')
 
         self._drew_grid(tb, width, height, ax)
-        plt.savefig(Path(self.images_dir, self.plot_name+'_state_values.png'), dpi=300)
+        plt.savefig(Path(self.images_dir, plot_name+'_state_values.png'), dpi=300)
 
 
     def new_state_given_action(self, state, action):

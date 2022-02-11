@@ -13,12 +13,12 @@ from typing import List, Dict, Tuple, Optional, Set
 
 # Local imports
 from ..logs import logging
-from .grid_environment import make
+from .grid_environment import Make
 
 class DP():
     def __init__(
         self, env, step_cost:float = -1, gamma:float = 0.5, 
-        noise:float = .0, epsilon:float = 1e-4
+        noise:float = .0, epsilon:float = 1e-4, plot_name:str = 'grid_world'
         ):
         """
         Initializes the grid world
@@ -29,6 +29,7 @@ class DP():
         self.epsilon = epsilon
         self.noise = noise
         self.env = env
+        self.plot_name = plot_name
 
     def prob_of_action(self, action:str):
         """
@@ -78,7 +79,7 @@ class DP():
         return self.env.grid
 
     def draw_state_value(self):
-        self.env.draw_state_value()
+        self.env.draw_state_value(plot_name=self.plot_name)
 
     def drew_policy(self):
-        self.env.drew_policy()
+        self.env.drew_policy(plot_name=self.plot_name)
