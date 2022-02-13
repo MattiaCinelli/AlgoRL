@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 # Local imports
 from ..logs import logging
 from .tool_box import create_directory
-
+import sys
 class Bandits():
     def __init__(
         self, 
@@ -50,7 +50,7 @@ class Bandits():
         plt.xlabel("Action")
         plt.ylabel("Reward distribution")
         plt.xticks(range(1, self.number_of_arms+1), self.bandit_name)
-        plt.savefig(Path(self.images_dir, f'{self.number_of_arms}=bandits.png'), dpi=300)
+        plt.savefig(Path(self.images_dir, f'{self.number_of_arms}-bandits.png'), dpi=300)
         plt.close()
 
     def return_bandit_df(self):
@@ -62,7 +62,7 @@ class Greedy():
     This code allows pure, epsilon-greedy with action value or step size with or without optimistic initial values.
     """
     def __init__(
-        self, bandit:Bandits, epsilon:float=.0, 
+        self, bandit:Bandits, epsilon:float=.1, 
         sample_averages:bool=True, step_size:float=0.1
         ) -> None:
         self.bandit = bandit
@@ -130,14 +130,18 @@ class UCB():
     """
     def __init__(
         self, bandit:Bandits, 
-        sample_averages:bool=True, step_size:float=0.1, UCB_param:float=0.1
+        sample_averages:bool=True, step_size:float=0.1, UCB_param:float=0.1, epsilon:float=.1
         ) -> None:
         self.bandit = bandit
         self.UCB_param = UCB_param
         self.sample_averages = sample_averages
         self.step_size = step_size
+        self.epsilon = epsilon
 
     def _act(self, num:int) -> None:
+        if np.random.rand() < self.epsilon:
+            return np.random.choice(self.bandit.bandit_name)
+
         UCB_estimation = self.bandit.bandit_df.loc['q_estimation', :] + \
             self.UCB_param * np.sqrt(
                 np.log(num + 1) / (self.bandit.bandit_df.loc['action_count', :] + 1e-5))
@@ -194,17 +198,25 @@ class GBA(): #TODO
     """
     def __init__(
         self, bandit:Bandits, 
-        sample_averages:bool=True, step_size:float=0.1) -> None:
+        sample_averages:bool=True, step_size:float=0.1, gradient_baseline=True, epsilon:float=.1
+        ) -> None:
         self.bandit = bandit
         self.sample_averages = sample_averages
         self.step_size = step_size
+        self.gradient_baseline = gradient_baseline
+        self.epsilon = epsilon
+        self.average_reward = 0
 
     def _act(self):
         exp_est = np.exp(self.bandit.bandit_df.loc['q_estimation', :])
         self.action_prob = exp_est / np.sum(exp_est)
+
+        if np.random.rand() < self.epsilon:
+            return np.random.choice(self.bandit.bandit_name)
+
         return np.random.choice(self.bandit.bandit_df.columns, p=self.action_prob)
 
-    def _step(self, action) -> None:
+    def _step(self, action, num) -> None:
         """
         This function updates the action value estimates.
         """
@@ -212,15 +224,20 @@ class GBA(): #TODO
             self.bandit.bandit_df[action]['mean'], 
             self.bandit.bandit_df[action]['sd'], size=1)[0]
         self.bandit.bandit_df[action]['action_count'] += 1
+        self.average_reward =+ (reward - self.average_reward)/(num+1)
+        
+        one_hot = np.zeros(self.bandit.bandit_df.shape[1])
+        # print()
 
-        average_reward =\
-            self.bandit.bandit_df[action]['q_estimation']+\
-            (reward - self.bandit.bandit_df[action]['q_estimation'])/\
-                self.bandit.bandit_df[action]['action_count']
+        one_hot[string.ascii_uppercase.index(action)] = 1
 
-        baseline = average_reward if self.gradient_baseline else 0
-        self.bandit.bandit_df[action]['q_estimation'] =\
-            self.bandit.bandit_df[action]['q_estimation'] + self.step_size * (reward - baseline) * (one_hot - self.action_prob)
+        
+        baseline = self.average_reward if self.gradient_baseline else 0
+
+        self.bandit.bandit_df.loc['q_estimation', :] =\
+            [(self.bandit.bandit_df[action]['q_estimation']+ self.step_size * (reward - baseline))*x 
+            for x in one_hot - self.action_prob]
+
 
     def simulate(self, time:int)-> None:
         """
@@ -230,7 +247,7 @@ class GBA(): #TODO
         best_action_percentage = []
         for num in range(time):
             action = self._act()
-            self._step(action)
+            self._step(action, num)
             if action == self.bandit.bandit_df.idxmax(axis=1)['mean']:
                 best_action_count += 1
                 best_action_percentage.append(best_action_count/(num+1))
