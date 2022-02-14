@@ -1,6 +1,7 @@
 """Simple script to run snips of code"""
 # Standard Libraries
-
+import numpy as np
+import pandas as pd
 # Third party libraries
 
 # Local imports
@@ -71,10 +72,31 @@ def print_tab_D():
     model.drew_policy()
 
 
+def print_tab_E():
+    df = pd.read_csv('data/maze_1.csv', header=None)
+    rows, cols = np.where(df==0)
+    env = Make(
+        grid_row=df.shape[0],
+        grid_col=df.shape[1],
+        walls=list(zip(rows, cols)),
+        terminal_states={(5, 4): 10, (0, 9): -10},
+    )
+
+    model = DP(
+        env=env,
+        plot_name='table_E',
+        step_cost = -1, 
+        gamma = 0.9
+        )
+    model.compute_state_value()
+    model.draw_state_value()
+    model.drew_policy()
+
 if __name__ == "__main__":
     logger = logging.getLogger("Main")
     logger.info("Running Main.py")
-    print_tab_A()
-    print_tab_B()
-    print_tab_C()
-    print_tab_D()
+    # print_tab_A()
+    # print_tab_B()
+    # print_tab_C()
+    # print_tab_D()
+    print_tab_E()
