@@ -118,7 +118,7 @@ class Make():
                 tb.add_cell(i, j, width, height, text=np.round(val, 2), loc='center', facecolor='white')
 
         self._drew_grid(tb, width, height, ax)
-        plt.savefig(Path(self.images_dir, plot_name+'_policy.png'), dpi=300)
+        plt.savefig(Path(self.images_dir, f'{plot_name}_policy.png'), dpi=300)
 
 
     def drew_policy(self, plot_name:str):
@@ -153,7 +153,7 @@ class Make():
                 tb.add_cell(i, j, width, height, text=arrows, loc='center', facecolor='white')
 
         self._drew_grid(tb, width, height, ax)
-        plt.savefig(Path(self.images_dir, plot_name+'_state_values.png'), dpi=300)
+        plt.savefig(Path(self.images_dir, f'{plot_name}_state_values.png'), dpi=300)
 
 
     def new_state_given_action(self, state, action):

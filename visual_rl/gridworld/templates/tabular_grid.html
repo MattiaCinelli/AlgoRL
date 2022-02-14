@@ -1,0 +1,23 @@
+{% block content %}
+<!DOCTYPE html>
+<html>
+<body>
+    <div style="text-align:center">
+        <h1>Grid World Examples</h1 >
+    <h2>Display a Number Field</h2>
+</div>
+    <form action="add">
+        <div>
+            <label for="quantity">Number of rows (1-5):</label>
+            <input type="number" id="quantity" name="quantity" min="1" max="5">
+        
+        <div>
+            <label for="quantity">Number of columns (1-5):</label>
+            <input type="number" id="quantity" name="quantity" min="1" max="5">
+            <input type="submit">
+        </div>
+    </form>
+</body>
+</html>
+
+{% endblock %}
