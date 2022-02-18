@@ -22,6 +22,12 @@ class DP():
         ):
         """
         Initializes the grid world
+        - env: grid_environment: A tabular environment created by Make class
+        - step_cost: float: cost of moving in the environment
+        - gamma: float: discount factor
+        - noise: float: probability of taking a action that is not the one chosen
+        - epsilon: float: threshold for convergence
+        - plot_name: str: name of the plot in output
         """
         # Agent position and reward set up
         self.step_cost = step_cost
