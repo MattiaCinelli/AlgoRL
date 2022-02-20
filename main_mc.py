@@ -6,12 +6,15 @@
 # Local imports
 from algorl.logs import logging
 from algorl.src.grid_environment import Make
-from algorl.src.MC import MCPrediction, MCExploringStarts
+from algorl.src.MC import MCPrediction, FirstVisitMCPredictions
 
 def print_tab_A():
-    env = Make(walls = [(1, 1)])
+    env = Make(
+        walls = [(1, 1)], 
+        terminal_states = {(0, 3): 1, (1, 3): -1}
+        )
     env.render_state_value()
-    mc = MCExploringStarts(env)
+    mc = MCPrediction(env)
     mc.compute_state_value()
 
 if __name__ == "__main__":

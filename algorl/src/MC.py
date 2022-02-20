@@ -1,5 +1,6 @@
 """Simple script to run snips of code"""
 # Standard Libraries
+from curses import KEY_C1
 from pathlib import Path
 
 # Third party libraries
@@ -26,19 +27,99 @@ class MCPrediction():
     '''
     Monte Carlo Prediction to estimate state-action values
     '''
+    def __init__(self, env, discount_factor:float = 0.9,  num_of_epochs:int = 10_000):
+        """
+        Initializes the grid world
+        - env: grid_environment: A tabular environment created by Make class
+        - discount_factor: float: discount factor
+        - num_of_epochs: int: number of epochs 
+        """
+        self.num_of_epochs = num_of_epochs
+        self.discount_factor = discount_factor
+        self.env = env
+
+    def get_action(self):
+        return np.random.choice(self.env.possible_actions) 
+
+    def compute_policy(self, state, action):
+        return state, action, self.env.grid[self.env.new_state_given_action(state, action)]
+
+    def compute_state_value(self):
+        # Initialize dictionary for final state value
+        # {x:num for x in self.env.available_states }
+        # state_value = {state:num for num, state in enumerate(self.env.available_states)}
+        state_value = pd.DataFrame({"states":self.env.available_states, 'times':0, 'sum_value':0})
+
+        for epoch in range(self.num_of_epochs):
+            if epoch % (self.num_of_epochs/10) == 0:
+                print(f'Epoch {epoch}')
+
+            # compute random first state and random first action for first state
+            state = self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] 
+            action = self.get_action()
+
+        ################
+        ## Create Path
+        ###############
+            state_reward = []
+            while not self.env.is_terminal_state(state):
+                state, action, reward = self.compute_policy(state, action)
+                state_reward.append((state, reward))
+
+                state = self.env.new_state_given_action(state, action)
+                action = self.get_action()
+
+        ################
+        ## COmpute return
+        ################
+            G = 0
+            first = True
+            states_returns = []
+            for state, reward in reversed(state_reward):
+                # a terminal state has a value of 0 by definition
+                # this is the first state we encounter in the reversed list
+                # we'll ignore its return (G) since it doesn't correspond to any move
+                if first:
+                    first = False
+                else:
+                    states_returns.append((state, G))
+                G = self.discount_factor * G + reward
+            states_returns.reverse()
+
+        ################
+        ## Update state value
+        ################
+            for state, G in states_returns:
+                state_value.loc[state_value.states==state, 'times'] += 1
+                state_value.loc[state_value.states==state, 'sum_value'] += G
+
+        ################
+        ## Update state value
+        ################
+        state_value['average'] = state_value.sum_value/state_value.times
+        for grid_state in state_value.states.unique():
+            self.env.grid[grid_state] =state_value[state_value.states == grid_state].average 
+
+        self.env.render_state_value()
+
+
+# df = pd.DataFrame.from_records(states_actions_returns, columns=['state', 'action', 'reward'])
+   
+
+class FirstVisitMCPredictions():
+    '''
+    Monte Carlo Prediction to estimate state-action values
+    '''
     def __init__(
-        self, env, step_cost:float = -1, discount_factor:float = 0.9, 
-        num_episodes:int = 100, num_of_epochs:int = 10,
-        noise:float = .0, plot_name:str = 'grid_world'
+        self, env, discount_factor:float = 0.9, 
+        num_episodes:int = 100, num_of_epochs:int = 10_000, plot_name:str = 'grid_world'
         ):
         """
         Initializes the grid world
         - env: grid_environment: A tabular environment created by Make class
-        - step_cost: float: cost of moving in the environment
-        - gamma: float: discount factor
-        - num_episodes: int: number of epochs to run the algorithm
-        - num_of_iterations: int: number of iterations within each epoch
-        - noise: float: probability of taking a action that is not the one chosen
+        - discount_factor: float: discount factor
+        - num_episodes: int: number of iterations per epoch
+        - num_of_epochs: int: number of epochs 
         - plot_name: str: name of the plot in output
         """
         # Agent position and reward set up
@@ -54,116 +135,73 @@ class MCPrediction():
         return state, action, self.env.grid[self.env.new_state_given_action(state, action)]
 
     def compute_state_value(self):
-        for _ in range(self.num_of_epochs):
-            # compute random first state
-            state = self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]]
-            # compute random first action for first state
+        # Initialize dictionary for final state value
+        # {x:num for x in self.env.available_states }
+        # state_value = {state:num for num, state in enumerate(self.env.available_states)}
+        state_value = pd.DataFrame({"states":self.env.available_states, 'times':0, 'sum_value':0})
+
+        for epoch in range(self.num_of_epochs):
+            if epoch % (self.num_of_epochs/10) == 0:
+                print(f'Epoch {epoch}')
+
+            # compute random first state and random first action for first state
+            state = self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] 
+            # state = (2,0)
             action = self.get_action()
-            # initialize state value dateframe
-            df = pd.DataFrame(columns=['state', 'action', 'reward'])
-            G = 0
-            for _ in range(self.num_episodes):
+
+            ##########
+            ## Create Path
+            ##########
+            state_action_reward = []
+            while not self.env.is_terminal_state(state):
                 state, action, reward = self.compute_policy(state, action)
-                df = df.append({
-                    'state' : state,
-                    'action' : action,
-                    'reward' : reward} , ignore_index=True)
+                state_action_reward.append((state, action, reward))
 
-                # new_state = self.env.new_state_given_action(state, action)
-                # while self.env.is_terminal_state(new_state):
-                #     action = self.get_action()
-                #     new_state = self.env.new_state_given_action(state, action)
-
-                new_state = self.env.new_state_given_action(state, action)
-                if self.env.is_terminal_state(new_state):
-                    break
-                state = new_state
+                state = self.env.new_state_given_action(state, action)
                 action = self.get_action()
-
-            # ic(df)
-            for num in range(df.shape[0]):
-                G = df.reward[num] + self.discount_factor*G
-                df.loc[num, 'G'] = G
-            for grid_state in df.state.unique():
-                self.env.grid[grid_state] = df[df.state == grid_state].reward.mean()
-
-            ic(df)
-        ic(self.env.grid)
-        return df
-
-
-
-
-class MCExploringStarts():
-    '''
-    Monte Carlo Prediction to estimate state-action values
-    '''
-    def __init__(
-        self, env, discount_factor:float = 0.9, 
-        num_episodes:int = 100, num_of_epochs:int = 1,
-
-        ):
-        """
-        Initializes the grid world
-        - env: grid_environment: A tabular environment created by Make class
-        - step_cost: float: cost of moving in the environment
-        - gamma: float: discount factor
-        - num_episodes: int: number of epochs to run the algorithm
-        - num_of_iterations: int: number of iterations within each epoch
-        - noise: float: probability of taking a action that is not the one chosen
-        - plot_name: str: name of the plot in output
-        """
-        # Agent position and reward set up
-        self.num_episodes = num_episodes
-        self.num_of_epochs = num_of_epochs
-        self.discount_factor = discount_factor
-        self.env = env
-
-    def get_action(self):
-        return np.random.choice(self.env.possible_actions) 
-
-    def compute_policy(self, state, action):
-        return state, action, -1+self.env.grid[self.env.new_state_given_action(state, action)]
-
-    def compute_state_value(self):
-        for _ in range(self.num_of_epochs):
-            # compute random first state
-            state = self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]]
-            # compute random first action for first state
-            action = self.get_action()
-            # initialize state value dateframe
-            df = pd.DataFrame(columns=['state', 'action', 'reward'])
+                
+            ##########
+            ## COmpute return
+            ##########
             G = 0
-            for _ in range(self.num_episodes):
-                state, action, reward = self.compute_policy(state, action)
-                df = df.append({
-                    'state' : state,
-                    'action' : action,
-                    'reward' : reward} , ignore_index=True)
+            first = True
+            states_actions_returns = []
+            for state, action, reward in reversed(state_action_reward):
+                # a terminal state has a value of 0 by definition
+                # this is the first state we encounter in the reversed list
+                # we'll ignore its return (G) since it doesn't correspond to any move
+                if first:
+                    first = False
+                else:
+                    states_actions_returns.append((state, action, G))
+                G = self.discount_factor * G + reward
+            states_actions_returns.reverse()
 
-                # new_state = self.env.new_state_given_action(state, action)
-                # while self.env.is_terminal_state(new_state):
-                #     action = self.get_action()
-                #     new_state = self.env.new_state_given_action(state, action)
+            ##########
+            ## Update state value
+            ##########
+            # first_time_visit_state = set()
+            for state, action, G in states_actions_returns:
+                # if state not in first_time_visit_state:
+                    # first_time_visit_state.add(state)
+                state_value.loc[state_value.states==state, 'times'] += 1
+                state_value.loc[state_value.states==state, 'sum_value'] += G
 
-                new_state = self.env.new_state_given_action(state, action)
-                if self.env.is_terminal_state(new_state):
-                    break
-                state = new_state
-                action = self.get_action()
+            a= set(x[0]for x in states_actions_returns)
+            ic(states_actions_returns)
+            ic(a)
+            sys.exit()
+            # assert len(first_time_visit_state)<=len(states_actions_returns)
+        ##########
+        ## Update state value
+        ##########
+        state_value['average'] = state_value.sum_value/state_value.times
+        print(state_value)
+        for grid_state in state_value.states.unique():
+            self.env.grid[grid_state] =state_value[state_value.states == grid_state].average 
 
-            # ic(df)
-            for num in range(df.shape[0]):
-                G = df.reward[num] + self.discount_factor*G
-                df.loc[num, 'G'] = G
-            
-            for grid_state in df.state.unique():
-                self.env.grid[grid_state] = df[df.state == grid_state].reward.mean()
+        self.env.render_state_value()
 
-        final = df.groupby(['state', 'action']).G.mean()
-        ic(final)
-        ic(self.env.grid)
-        
 
 def mc_prediction(env, num_episodes, discount_factor=1.0):
     """
@@ -236,5 +274,4 @@ def mc_prediction(env, num_episodes, discount_factor=1.0):
 
     return V    
 
-# V_10k = mc_prediction(sample_policy, env, num_episodes=10000)
-# V_500k = mc_prediction(sample_policy, env, num_episodes=500000)
+
