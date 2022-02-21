@@ -7,7 +7,7 @@ import pandas as pd
 # Local imports
 from algorl.logs import logging
 from algorl.src.grid_environment import Make
-from algorl.src.tabular import DP
+from algorl.src.DP import DP
 
 def print_tab_A():
     env = Make(walls = [(1, 1)])
