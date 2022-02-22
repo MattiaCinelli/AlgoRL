@@ -1,9 +1,15 @@
 # AlgoRL
 
-<!-- ![Logo](https://.png) -->
+<!-- ![Logo](https://github.com/MattiaCinelli/AlgoRL/tree/master/commons/.png) -->
 <!-- <img src="common/pybiscuit.png" width=125 height=128 align='right'> -->
 
-A repo of the most common RL algorithms and example of their applications
+A repository of the most common RL algorithms and example of their applications.
+
+Here, I'd like to gather python code equivalents of the pseudo-code reported in "Reinforcement Learning: An Introduction, 2nd edition
+by Richard S. Sutton and Andrew G. Barto". The aim is not to create the most efficient algorithms but to be the most didactic and clear.
+Showing all steps and hard-to-understand points.
+
+Help, in the form of reviews, contributions, bug-reporting is greatly encouraged and appreciated.
 
 <!-- Add badges from somewhere like: [shields.io](https://shields.io/) -->
 
@@ -29,11 +35,11 @@ cd algorl
 pip install .
 ```
 
-# Usage
+<!-- # Usage
 ```python
 pip install --upgrade pip
 ...
-```
+``` -->
 
 ## Examples
 
@@ -48,6 +54,7 @@ Please do not hesitate to contact me to report issues or new ideas.
 
 # License
 
+[MIT License](https://github.com/MattiaCinelli/AlgoRL/blob/master/LICENSE)
 
 ## Authors
 - [@MattiaCinelli](https://www.github.com/MattiaCinelli)

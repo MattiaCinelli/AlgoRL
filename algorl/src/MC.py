@@ -16,6 +16,9 @@ from .tool_box import create_directory
 # 2. On-policy first-visit Monte Carlo Control algorithm
 # 3. Off-policy every-visit Monte Carlo Control using Weighted Important Sampling algorithm
 
+# Source:
+# https://people.cs.umass.edu/~barto/courses/cs687/Chapter%205.pdf
+
 class MonteCarloFunctions(object):
     """
     """
