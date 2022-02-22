@@ -1,6 +1,6 @@
 # AlgoRL
 
-<!-- ![Logo](https://github.com/MattiaCinelli/AlgoRL/tree/master/commons/.png) -->
+![Logo](https://github.com/MattiaCinelli/AlgoRL/tree/master/commons/AlgoRL.png)
 <!-- <img src="common/pybiscuit.png" width=125 height=128 align='right'> -->
 
 A repository of the most common RL algorithms and example of their applications.
