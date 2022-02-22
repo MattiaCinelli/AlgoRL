@@ -11,7 +11,7 @@ from algorl.src.MC import MCPrediction, FirstVisitMCPredictions, MCExploringStar
 def print_tab_A():
     env = Make(
         walls = [(1, 1)], 
-        terminal_states = {(0, 3): 1, (1, 3): -1}
+        terminal_states = {(0, 3): 1, (1, 3): -10}
         )
     env.render_state_value()
     # mc = MCPrediction(env)
