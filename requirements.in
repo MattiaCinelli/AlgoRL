@@ -14,7 +14,10 @@ seaborn
 # ML
 scipy
 scikit-learn
-# tensorflow
+tensorflow
+# tensorflow-gpu
+gym
+roboschool
 # keras
 
 # Structure
