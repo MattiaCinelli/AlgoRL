@@ -54,9 +54,9 @@ class MonteCarloFunctions(object):
 
             if new_state == state:
                 # Add penalty for staying in the same state
-                reward = -1 + self.env.grid[self.env.new_state_given_action(state, state_action[state])]
+                reward = -5 + self.env.grid[self.env.new_state_given_action(state, state_action[state])]
             else:
-                reward = self.env.grid[self.env.new_state_given_action(state, state_action[state])]
+                reward = -1 + self.env.grid[self.env.new_state_given_action(state, state_action[state])]
             state_action_reward.append((state, state_action[state], reward))
 
             state = new_state

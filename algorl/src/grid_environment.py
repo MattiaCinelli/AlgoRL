@@ -19,7 +19,7 @@ class Make():
     def __init__(
         self, grid_row:int = 3, grid_col:int = 4, 
         terminal_states:Dict = None, walls:List[Tuple] = None, initial_state:tuple = (0,0),
-        images_dir:str = 'images'
+        images_dir:str = 'images', some_value:float = 0.0,
         ):
         """
         Initializes the grid world
@@ -30,7 +30,7 @@ class Make():
         # Initialize the grid environment
         self.grid_row = grid_row
         self.grid_col = grid_col
-        self.grid = np.zeros((self.grid_row, self.grid_col))
+        self.grid = np.zeros((self.grid_row, self.grid_col)) + some_value
 
         # States set up
         ## A list of all possible states
