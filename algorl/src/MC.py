@@ -130,7 +130,8 @@ class MCPrediction(MonteCarloFunctions):
 
 class FirstVisitMCPredictions(MonteCarloFunctions): # page 92
     '''
-    First-Visit Monte Carlo Prediction, for estimating V = v_pi, page 92
+    First-Visit Monte Carlo Prediction, for estimating V = v_pi
+    Page 92 of Sutton and Barto.
     '''
     def __init__(
         self, env, discount_factor:float = 0.9, 
@@ -206,7 +207,8 @@ class FirstVisitMCPredictions(MonteCarloFunctions): # page 92
 
 class MCExploringStarts(MonteCarloFunctions): # page 99
     '''
-    Monte Carlo Exploring Starts to estimating pi = pi*, page 99
+    Monte Carlo Exploring Starts to estimating pi = pi*
+    Page 99 of Sutton and Barto.
     '''
     def __init__(
         self, env, discount_factor:float = 0.9, 
@@ -303,7 +305,7 @@ class MCExploringStarts(MonteCarloFunctions): # page 99
         self.env.drew_policy(plot_name=self.plot_name)
         self.env.draw_state_value(plot_name=self.plot_name)
 
-class  OnPolicyFirstVisitMCControlEstimatingPi(MonteCarloFunctions): # page 101
+class OnPolicyFirstVisitMCControlEstimatingPi(MonteCarloFunctions): # page 101
     pass
 
 class OffPolicyMCPredictionEstimatingQ(MonteCarloFunctions): # page 110

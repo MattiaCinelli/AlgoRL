@@ -85,6 +85,7 @@ class TemporalDifferenceFunctions(object):
 class TabuladTD0(TemporalDifferenceFunctions): # Page 120
     '''
     Monte Carlo Prediction to estimate state-action values
+    Page 120 of Sutton and Barto.
 
     Input: the policy \pi to be evaluated
     Algorithm parameter: step size alfa element of (0, 1]
@@ -132,7 +133,8 @@ class TabuladTD0(TemporalDifferenceFunctions): # Page 120
 
 class Sarsa(TemporalDifferenceFunctions): # page 130
     '''
-    Sarsa (on-policy TD control) for estimating Q=q* page 130
+    Sarsa (on-policy TD control) for estimating Q=q*
+    Page 130 of Sutton and Barto.
 
     Algorithm parameters: step size alpha element of (0, 1], small " > 0
     Initialize Q(s,a), for all s element of S+,a element of A(s), arbitrarily except that Q(terminal,·) = 0
@@ -205,7 +207,9 @@ class Sarsa(TemporalDifferenceFunctions): # page 130
 
 class QLearning(TemporalDifferenceFunctions): # page 131
     '''
-    Q-learning for estimating pi=pi* page 131
+    Q-learning for estimating pi=pi*
+    Page 131 of Sutton and Barto.
+
     Algorithm parameters: step size alpha element of (0, 1], small " > 0
     Initialize Q(s,a), for all s element of S+,a element of A(s), arbitrarily except that Q(terminal,·) = 0
 
@@ -271,8 +275,6 @@ class QLearning(TemporalDifferenceFunctions): # page 131
                 action = new_action
 
                 num_of_steps += 1
-        # ic(q_values_df)
-        # ic()
         self.drew_policy(q_values_df, plot_name=self.plot_name)
 
 class NstepTD(TemporalDifferenceFunctions): # page 144
