@@ -59,7 +59,19 @@ class Bandits():
 
 class Greedy():
     """
-    This code allows pure, epsilon-greedy with action value or step size with or without optimistic initial values.
+    This code allows pure, epsilon-greedy with action value or step size with or without optimistic initial values. 
+    Page 32 of Sutton and Barto.
+
+    A simple bandit algorithm
+    Initialize, for a = 1 to k: 
+    Q(a) <- 0
+    N(a) <- 0
+    Loop for⇢ever:
+        A <- either: arg max_a Q(a) with probability 1 - e (breaking ties randomly)
+            or: a random action with probability e
+        R <- bandit(A)
+        N(A) N(A)+1
+        Q(A) Q(A)+ 1/N(A) * (R - Q(A))
     """
     def __init__(
         self, bandit:Bandits, epsilon:float=.1, 
@@ -127,6 +139,7 @@ class Greedy():
 class UCB():
     """
     Upper Confidence Bound (UCB) algorithm.
+    Page 35 of Sutton and Barto.
     """
     def __init__(
         self, bandit:Bandits, 
@@ -195,6 +208,7 @@ class UCB():
 class GBA(): #TODO
     """
     Gradient Bandit Algorithm
+    Page 37 of Sutton and Barto.
     """
     def __init__(
         self, bandit:Bandits, 

@@ -16,6 +16,10 @@ from ..logs import logging
 from .grid_environment import Make
 
 class DP():
+    """
+    Policy Iteration (using iterative policy evaluation) for estimating pi = pi*
+    Page 80 of Sutton and Barto.
+    """
     def __init__(
         self, env, step_cost:float = -1, gamma:float = 0.5, 
         noise:float = .0, epsilon:float = 1e-4, plot_name:str = 'grid_world'
