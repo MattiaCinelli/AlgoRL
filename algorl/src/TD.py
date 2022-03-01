@@ -116,7 +116,7 @@ class TabuladTD0(TemporalDifferenceFunctions): # Page 120
         for epoch in range(self.num_of_epochs):
             if epoch % (self.num_of_epochs/10) == 0:
                 print(f'Epoch {epoch}')
-            state = (2,0) # self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] 
+            state = (2,0)
             
             while not self.env.is_terminal_state(state):
                 # print(state)
@@ -186,9 +186,7 @@ class Sarsa(TemporalDifferenceFunctions): # page 130
             num_of_steps = 0
             while not self.env.is_terminal_state(state) and num_of_steps < self.num_episodes:
                 new_state = self.env.new_state_given_action(state, action)
-                # if self.env.is_terminal_state(new_state):
-                #     new_action = action
-                # else:
+
                 new_action = self.epsilon_greedy(state_action_pairs[new_state])
 
                 q_values_df.at[state, action] =\
@@ -200,8 +198,7 @@ class Sarsa(TemporalDifferenceFunctions): # page 130
                 action = new_action
 
                 num_of_steps += 1
-        # ic(q_values_df)
-        # ic()
+
         self.drew_policy(q_values_df, plot_name=self.plot_name)
 
 
@@ -250,19 +247,16 @@ class QLearning(TemporalDifferenceFunctions): # page 131
         state_action_pairs = {state:self.get_action() for state in self.env.all_states}
         for x, y in state_action_pairs.items():
             state_action_pairs[x] = self.epsilon_greedy(y)
-        # state_action_pairs = {(0, 0): 'R', (0, 1): 'D', (0, 2): 'L', (1, 0): 'U', (1, 2): 'D', (2, 0): 'R', (2, 1): 'R', (2, 2): 'U', (2, 3): 'U'}
+        
 
         for epoch in range(self.num_of_epochs):
             if epoch % (self.num_of_epochs/10) == 0:
                 print(f'Epoch {epoch}')
-            state = (2,0) # self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] 
+            state = (2,0)
             action = state_action_pairs[state]
             num_of_steps = 0
             while not self.env.is_terminal_state(state) and num_of_steps < self.num_episodes:
                 new_state = self.env.new_state_given_action(state, action)
-                # if self.env.is_terminal_state(new_state):
-                #     new_action = action
-                # else:
                 new_action = self.epsilon_greedy(state_action_pairs[new_state])
                 max_value = max(q_values_df.at[new_state, x] for x in self.env.possible_actions)
 
@@ -277,8 +271,3 @@ class QLearning(TemporalDifferenceFunctions): # page 131
                 num_of_steps += 1
         self.drew_policy(q_values_df, plot_name=self.plot_name)
 
-class NstepTD(TemporalDifferenceFunctions): # page 144
-    '''
-    n-step TD for estimating vi=vi* page 144
-    '''
-    pass

@@ -3,7 +3,7 @@
 
 # ignore mac's stupid things
 *.DS_Store
-
+*.txt
 *~
 *.csv
 .ipynb_checkpoints

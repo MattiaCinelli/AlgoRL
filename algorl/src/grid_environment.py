@@ -15,7 +15,7 @@ from typing import List, Dict, Tuple, Optional, Set
 from ..logs import logging
 from .tool_box import create_directory
 
-class Make():
+class MakeGrid():
     def __init__(
         self, grid_row:int = 3, grid_col:int = 4, 
         terminal_states:Dict = None, walls:List[Tuple] = None, initial_state:tuple = (0,0),
