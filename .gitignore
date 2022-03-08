@@ -8,7 +8,6 @@
 *.csv
 .ipynb_checkpoints
 .vscode
-*.ipynb
 .valgorl
 
 # Compiled python modules.

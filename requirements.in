@@ -15,6 +15,7 @@ seaborn
 scipy
 scikit-learn
 tensorflow
+ipywidgets
 # tensorflow-gpu
 gym
 roboschool
