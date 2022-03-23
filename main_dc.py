@@ -36,7 +36,6 @@ def print_tab_B():
     model.draw_state_value()
     model.drew_policy()
 
-
 def print_tab_C():
     env = MakeGrid(
         grid_row = 4, 
@@ -71,7 +70,6 @@ def print_tab_D():
     model.draw_state_value()
     model.drew_policy()
 
-
 def print_tab_E():
     df = pd.read_csv('data/maze_1.csv', header=None)
     rows, cols = np.where(df==0)
@@ -95,8 +93,8 @@ def print_tab_E():
 if __name__ == "__main__":
     logger = logging.getLogger("Main")
     logger.info("Running Main.py")
-    # print_tab_A()
-    # print_tab_B()
-    # print_tab_C()
-    # print_tab_D()
+    print_tab_A()
+    print_tab_B()
+    print_tab_C()
+    print_tab_D()
     print_tab_E()

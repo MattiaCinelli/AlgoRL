@@ -38,8 +38,8 @@ if __name__ == "__main__":
         q_mean=np.random.randn(10),  # q_mean=[1,2,3,4,5,6,7,8,9,10] # 
         # initial=4
         )
-    # bandit.plot_bandits()
+    bandit.plot_bandits()
 
-    # test_greedy(bandit)
-    # test_UCB(bandit)
+    test_greedy(bandit)
+    test_UCB(bandit)
     test_GBA(bandit)
