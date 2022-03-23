@@ -27,6 +27,7 @@ def eval_env_random_actions(env, episodes = 10, render = True):
         all_rewards.append(score)
     env.close()
     print("\n\n\tMean reward:", np.mean(all_rewards), "Num episodes:", episodes)
+    return np.mean(all_rewards)
     
 
 def evaluate_model(model, num_episodes=100):
