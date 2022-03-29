@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from ..logs import logging
 from .tool_box import create_directory
 import sys
-logger = logging.getLogger("Bandit MAB")
+logger = logging.getLogger(__name__)
 
 
 class TestAll(object):
