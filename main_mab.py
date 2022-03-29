@@ -1,10 +1,10 @@
 """Simple script to run snips of code"""
 # Standard Libraries
-import numpy as np
 import sys
+
 # Third party libraries
 from icecream import ic
-import pandas as pd
+
 # Local imports
 from algorl.logs import logging
 from algorl.src.bandit import *

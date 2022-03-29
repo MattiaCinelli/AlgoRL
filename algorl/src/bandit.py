@@ -90,8 +90,8 @@ class Bandits():
         create_directory(directory_path = self.images_dir)
 
     def reset_bandit_df(self):
-        self.bandit_df.loc['action_count', :]  = .0
-        self.bandit_df.loc['q_estimation', :]  = .0 + self.initial
+        self.bandit_df.loc['action_count', :] = .0
+        self.bandit_df.loc['q_estimation', :] = .0 + self.initial
 
     def plot_bandits (self):
         df = pd.DataFrame(
@@ -122,7 +122,7 @@ class MABFunctions(object):
         self.bandit.bandit_df[action]['action_count'] += 1
 
         if self.sample_averages:
-            self.bandit.bandit_df[action]['q_estimation']  =\
+            self.bandit.bandit_df[action]['q_estimation'] =\
                 self.bandit.bandit_df[action]['q_estimation']+\
                 (reward - self.bandit.bandit_df[action]['q_estimation'])/\
                     self.bandit.bandit_df[action]['action_count']
