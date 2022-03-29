@@ -13,6 +13,57 @@ import matplotlib.pyplot as plt
 from ..logs import logging
 from .tool_box import create_directory
 import sys
+logger = logging.getLogger("Bandit MAB")
+
+
+class TestAll(object):
+    logger.info("Running TestAll MAB")
+    def __init__(self, time_steps:int=100, arms:int=5, number_of_trials:int=5, images_dir:str='images'):
+        self.df_return = pd.DataFrame()
+        self.df_action = pd.DataFrame()
+        self.time_steps = time_steps
+        self.number_of_trials = number_of_trials
+        self.arms = arms
+        self.images_dir = images_dir
+    
+    def test_algo(self, algo, col_name:str=None):
+        if col_name is None:
+            col_name = algo.__name__
+        logger.info(f"Running {col_name}")
+        rewards, best_actions = [], []
+        for _ in range(self.number_of_trials):
+            logger.info("\ttest: {}".format(_))
+            #1 New bandits
+            bandit = Bandits(number_of_arms = self.arms)
+            #2 Simulate
+            explore = algo(bandit)
+            reward, best_action =  explore.simulate(time = self.time_steps)
+            rewards.append(np.cumsum(reward))
+            best_actions.append(best_action)
+            bandit.reset_bandit_df()
+        self.df_return[f"{col_name}"] = pd.Series(np.mean([rewards], axis=1)[0], index=range(self.time_steps))
+        self.df_action[f"{col_name}"] = pd.Series(np.mean([best_actions], axis=1)[0], index=range(self.time_steps))
+    
+    def return_dfs(self):
+        return self.df_return, self.df_action
+
+    def _comparing_plots(self, arg0, arg1, pic_name):
+        plt.figure(figsize=(10, 5))
+        arg0.plot.line()
+        plt.xlabel("Steps")
+        plt.ylabel(arg1)
+        plt.savefig(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
+        plt.close()
+
+    def plot_action_taken(self, best_actions, pic_name:str = 'BestActions' ):
+        self._comparing_plots(
+            best_actions, "% of time best action is taken", pic_name
+        )
+
+    def plot_returns(self, tot_return, pic_name:str='TotalReturns' ):
+        self._comparing_plots(tot_return, "Total returns", pic_name)
+
+
 class Bandits():
     def __init__(
         self, 
@@ -56,6 +107,7 @@ class Bandits():
     def return_bandit_df(self):
         return self.bandit_df
 
+
 class MABFunctions(object):
     def __init__(self) -> None:
         pass
@@ -97,21 +149,6 @@ class MABFunctions(object):
         self.best_action_percentage = best_action_percentage
         return self.tot_return, self.best_action_percentage
 
-    def _comparing_plots(self, arg0, arg1, pic_name):
-        plt.figure(figsize=(10, 5))
-        arg0.plot.line()
-        plt.xlabel("Steps")
-        plt.ylabel(arg1)
-        plt.savefig(Path(self.bandit.images_dir, f'{pic_name}.png'), dpi=300)
-        plt.close()
-
-    def plot_action_taken(self, best_actions, pic_name:str = 'BestActions' ):
-        self._comparing_plots(
-            best_actions, "% of time best action is taken", pic_name
-        )
-
-    def plot_returns(self, tot_return, pic_name:str='TotalReturns' ):
-        self._comparing_plots(tot_return, "Total returns", pic_name)
 
 class OnlyExploration(MABFunctions):
     def __init__(
@@ -128,6 +165,7 @@ class OnlyExploration(MABFunctions):
         """
         return np.random.choice(self.bandit.bandit_name)
 
+
 class OnlyExploitation(MABFunctions):
     def __init__(
         self, bandit:Bandits, sample_averages:bool=True, 
@@ -142,6 +180,7 @@ class OnlyExploitation(MABFunctions):
         This function returns a random action 
         """
         return self.bandit.return_bandit_df().loc['mean', :].idxmax()
+
 
 class Greedy(MABFunctions):
     """
@@ -179,6 +218,7 @@ class Greedy(MABFunctions):
                 self.bandit.bandit_df.loc['q_estimation', :][self.bandit.bandit_df.loc['q_estimation', :] ==\
                     self.bandit.bandit_df.loc['q_estimation', :].max()].index)
 
+
 class UCB(MABFunctions):
     """
     Upper Confidence Bound (UCB) algorithm.
@@ -204,6 +244,7 @@ class UCB(MABFunctions):
                 np.log(num + 1) / (self.bandit.bandit_df.loc['action_count', :] + 1e-5))
         
         return self.bandit.bandit_df.columns[np.random.choice(np.where(UCB_estimation == np.max(UCB_estimation))[0])]
+
 
 class GBA(): #TODO
     """
@@ -251,6 +292,7 @@ class GBA(): #TODO
         self.bandit.bandit_df.loc['q_estimation', :] =\
             [(self.bandit.bandit_df[action]['q_estimation']+ self.step_size * (reward - baseline))*x 
             for x in one_hot - self.action_prob]
+
 
 class ThompsonSampling(MABFunctions): #TODO
     pass
