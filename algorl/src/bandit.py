@@ -79,6 +79,7 @@ class MABFunctions(object):
                 self.bandit.bandit_df[action]['q_estimation'] +\
                     self.step_size *\
                          (reward - self.bandit.bandit_df[action]['q_estimation'])
+        return reward
 
     def simulate(self, time:int)-> None:
         """
@@ -88,7 +89,7 @@ class MABFunctions(object):
         best_action_count = 0
         best_action_percentage = []
         for num in range(time):
-            action = self._act()
+            action = self._act(num)
             self.tot_return.append(self._step(action))
             if action == best_action:
                 best_action_count += 1
@@ -96,23 +97,51 @@ class MABFunctions(object):
         self.best_action_percentage = best_action_percentage
         return self.tot_return, self.best_action_percentage
 
-    def plot_action_taking(self):
-        plt.figure(figsize=(10,5))
-        plt.plot(self.best_action_percentage)
+    def _comparing_plots(self, arg0, arg1, pic_name):
+        plt.figure(figsize=(10, 5))
+        arg0.plot.line()
         plt.xlabel("Steps")
-        plt.ylabel("% of time best action is taken")
-        plt.savefig(Path(self.bandit.images_dir, f'{self.epsilon}-greedy.png'), dpi=300)
+        plt.ylabel(arg1)
+        plt.savefig(Path(self.bandit.images_dir, f'{pic_name}.png'), dpi=300)
         plt.close()
 
-    def plot_returns(self, tot_return):
-        plt.figure(figsize=(10,5))
-        plt.plot(np.cumsum(tot_return))
-        tot_return.plot.line()
-        plt.xlabel("Steps")
-        plt.ylabel("Total returns")
-        plt.savefig(Path(self.bandit.images_dir, 'TotalReturn.png'), dpi=300)
-        plt.close()
+    def plot_action_taken(self, best_actions, pic_name:str = 'BestActions' ):
+        self._comparing_plots(
+            best_actions, "% of time best action is taken", pic_name
+        )
 
+    def plot_returns(self, tot_return, pic_name:str='TotalReturns' ):
+        self._comparing_plots(tot_return, "Total returns", pic_name)
+
+class OnlyExploration(MABFunctions):
+    def __init__(
+        self, bandit:Bandits, sample_averages:bool=True, 
+        step_size:float=0.1) -> None:
+        self.bandit = bandit
+        self.tot_return = []
+        self.sample_averages = sample_averages
+        self.step_size = step_size
+
+    def _act(self, _:int) -> str:
+        """
+        This function returns a random action 
+        """
+        return np.random.choice(self.bandit.bandit_name)
+
+class OnlyExploitation(MABFunctions):
+    def __init__(
+        self, bandit:Bandits, sample_averages:bool=True, 
+        step_size:float=0.1) -> None:
+        self.bandit = bandit
+        self.tot_return = []
+        self.sample_averages = sample_averages
+        self.step_size = step_size
+
+    def _act(self, _:int) -> str:
+        """
+        This function returns a random action 
+        """
+        return self.bandit.return_bandit_df().loc['mean', :].idxmax()
 
 class Greedy(MABFunctions):
     """
@@ -140,7 +169,7 @@ class Greedy(MABFunctions):
         self.step_size = step_size
         self.tot_return = []
 
-    def _act(self) -> None:
+    def _act(self, _:int) -> str:
         """
         This function returns the action to be taken based on the epsilon greedy policy.
         """
@@ -164,8 +193,9 @@ class UCB(MABFunctions):
         self.sample_averages = sample_averages
         self.step_size = step_size
         self.epsilon = epsilon
+        self.tot_return = []
 
-    def _act(self, num:int) -> None:
+    def _act(self, num:int) -> pd.DataFrame:
         if np.random.rand() < self.epsilon:
             return np.random.choice(self.bandit.bandit_name)
 
@@ -174,31 +204,6 @@ class UCB(MABFunctions):
                 np.log(num + 1) / (self.bandit.bandit_df.loc['action_count', :] + 1e-5))
         
         return self.bandit.bandit_df.columns[np.random.choice(np.where(UCB_estimation == np.max(UCB_estimation))[0])]
-        
-
-
-    def simulate(self, time:int)-> None:
-        """
-        This function simulates the action taking process.
-        """
-        best_action_count = 0
-        best_action_percentage = []
-        for num in range(time):
-            action = self._act(num)
-            self._step(action)
-            if action == self.bandit.bandit_df.idxmax(axis=1)['mean']:
-                best_action_count += 1
-                best_action_percentage.append(best_action_count/(num+1))
-        self.best_action_percentage = best_action_percentage
-
-    def plot_action_taking(self):
-        plt.figure(figsize=(10,5))
-        plt.plot(self.best_action_percentage)
-        plt.xlabel("Steps")
-        plt.ylabel("% of time best action is taken")
-        plt.savefig(Path(self.bandit.images_dir, 'UCB.png'), dpi=300)
-        plt.close()
-
 
 class GBA(): #TODO
     """
@@ -247,25 +252,5 @@ class GBA(): #TODO
             [(self.bandit.bandit_df[action]['q_estimation']+ self.step_size * (reward - baseline))*x 
             for x in one_hot - self.action_prob]
 
-
-    def simulate(self, time:int)-> None:
-        """
-        This function simulates the action taking process.
-        """
-        best_action_count = 0
-        best_action_percentage = []
-        for num in range(time):
-            action = self._act()
-            self._step(action, num)
-            if action == self.bandit.bandit_df.idxmax(axis=1)['mean']:
-                best_action_count += 1
-                best_action_percentage.append(best_action_count/(num+1))
-        self.best_action_percentage = best_action_percentage
-
-    def plot_action_taking(self):
-        plt.figure(figsize=(10,5))
-        plt.plot(self.best_action_percentage)
-        plt.xlabel("Steps")
-        plt.ylabel("% of time best action is taken")
-        plt.savefig(Path(self.bandit.images_dir, 'GBA.png'), dpi=300)
-        plt.close()
+class ThompsonSampling(MABFunctions): #TODO
+    pass
