@@ -56,42 +56,9 @@ class Bandits():
     def return_bandit_df(self):
         return self.bandit_df
 
-
-class Greedy():
-    """
-    This code allows pure, epsilon-greedy with action value or step size with or without optimistic initial values. 
-    Page 32 of Sutton and Barto.
-
-    A simple bandit algorithm
-    Initialize, for a = 1 to k: 
-    Q(a) <- 0
-    N(a) <- 0
-    Loop for⇢ever:
-        A <- either: arg max_a Q(a) with probability 1 - e (breaking ties randomly)
-            or: a random action with probability e
-        R <- bandit(A)
-        N(A) N(A)+1
-        Q(A) Q(A)+ 1/N(A) * (R - Q(A))
-    """
-    def __init__(
-        self, bandit:Bandits, epsilon:float=.1, 
-        sample_averages:bool=True, step_size:float=0.1
-        ) -> None:
-        self.bandit = bandit
-        self.epsilon = epsilon
-        self.sample_averages = sample_averages
-        self.step_size = step_size
-    
-    def _act(self) -> None:
-        """
-        This function returns the action to be taken based on the epsilon greedy policy.
-        """
-        if np.random.rand() < self.epsilon:
-            return np.random.choice(self.bandit.bandit_name)
-        return np.random.choice(
-                self.bandit.bandit_df.loc['q_estimation', :][self.bandit.bandit_df.loc['q_estimation', :] ==\
-                    self.bandit.bandit_df.loc['q_estimation', :].max()].index)
-
+class MABFunctions(object):
+    def __init__(self) -> None:
+        pass
 
     def _step(self, action) -> None:
         """
@@ -117,15 +84,17 @@ class Greedy():
         """
         This function simulates the action taking process.
         """
+        best_action = self.bandit.return_bandit_df().loc['mean', :].idxmax()
         best_action_count = 0
         best_action_percentage = []
         for num in range(time):
             action = self._act()
-            self._step(action)
-            if action == self.bandit.bandit_df.idxmax(axis=1)['mean']:
+            self.tot_return.append(self._step(action))
+            if action == best_action:
                 best_action_count += 1
-                best_action_percentage.append(best_action_count/(num+1))
+            best_action_percentage.append(best_action_count/(num+1))
         self.best_action_percentage = best_action_percentage
+        return self.tot_return, self.best_action_percentage
 
     def plot_action_taking(self):
         plt.figure(figsize=(10,5))
@@ -135,8 +104,53 @@ class Greedy():
         plt.savefig(Path(self.bandit.images_dir, f'{self.epsilon}-greedy.png'), dpi=300)
         plt.close()
 
+    def plot_returns(self, tot_return):
+        plt.figure(figsize=(10,5))
+        plt.plot(np.cumsum(tot_return))
+        tot_return.plot.line()
+        plt.xlabel("Steps")
+        plt.ylabel("Total returns")
+        plt.savefig(Path(self.bandit.images_dir, 'TotalReturn.png'), dpi=300)
+        plt.close()
 
-class UCB():
+
+class Greedy(MABFunctions):
+    """
+    This code allows pure, epsilon-greedy with action value or step size with or without optimistic initial values. 
+    Page 32 of Sutton and Barto.
+
+    A simple bandit algorithm
+    Initialize, for a = 1 to k: 
+    Q(a) <- 0
+    N(a) <- 0
+    Loop for⇢ever:
+        A <- either: arg max_a Q(a) with probability 1 - e (breaking ties randomly)
+            or: a random action with probability e
+        R <- bandit(A)
+        N(A) N(A)+1
+        Q(A) Q(A)+ 1/N(A) * (R - Q(A))
+    """
+    def __init__(
+        self, bandit:Bandits, epsilon:float=.1, 
+        sample_averages:bool=True, step_size:float=0.1
+        ) -> None:
+        self.bandit = bandit
+        self.epsilon = epsilon
+        self.sample_averages = sample_averages
+        self.step_size = step_size
+        self.tot_return = []
+
+    def _act(self) -> None:
+        """
+        This function returns the action to be taken based on the epsilon greedy policy.
+        """
+        if np.random.rand() < self.epsilon:
+            return np.random.choice(self.bandit.bandit_name)
+        return np.random.choice(
+                self.bandit.bandit_df.loc['q_estimation', :][self.bandit.bandit_df.loc['q_estimation', :] ==\
+                    self.bandit.bandit_df.loc['q_estimation', :].max()].index)
+
+class UCB(MABFunctions):
     """
     Upper Confidence Bound (UCB) algorithm.
     Page 35 of Sutton and Barto.
@@ -162,25 +176,6 @@ class UCB():
         return self.bandit.bandit_df.columns[np.random.choice(np.where(UCB_estimation == np.max(UCB_estimation))[0])]
         
 
-    def _step(self, action) -> None:
-        """
-        This function updates the action value estimates.
-        """
-        reward = np.random.normal(
-            self.bandit.bandit_df[action]['mean'], 
-            self.bandit.bandit_df[action]['sd'], size=1)[0]
-        self.bandit.bandit_df[action]['action_count'] += 1
-
-        if self.sample_averages:
-            self.bandit.bandit_df[action]['q_estimation']  =\
-                self.bandit.bandit_df[action]['q_estimation']+\
-                (reward - self.bandit.bandit_df[action]['q_estimation'])/\
-                    self.bandit.bandit_df[action]['action_count']
-        else:
-            self.bandit.bandit_df[action]['q_estimation'] =\
-                self.bandit.bandit_df[action]['q_estimation'] +\
-                    self.step_size *\
-                         (reward - self.bandit.bandit_df[action]['q_estimation'])
 
     def simulate(self, time:int)-> None:
         """
