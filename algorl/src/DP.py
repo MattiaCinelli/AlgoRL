@@ -13,20 +13,38 @@ from typing import List, Dict, Tuple, Optional, Set
 
 # Local imports
 from ..logs import logging
-from .grid_environment import Make
 
 class DP():
-    """
+    '''
     Policy Iteration (using iterative policy evaluation) for estimating pi = pi*
     Page 80 of Sutton and Barto.
-    """
+
+    Policy Iteration (using iterative policy evaluation) for estimating pi in pi*
+    1. Initialization
+        V(s) element of R and pi(s) element of A(s) arbitrarily for all s element of S; V(terminal)= 0
+    2. Policy Evaluation 
+        Loop:
+            Delta <- 0
+            Loop for each s element of S:
+                v <- V(s)
+                $ V(s) <- sum_{s', r}p(s', r | s, pi(s))[r + gamma V(s')] $
+                delta <- max(delta, |v delta V (s)|)
+        until delta < theta (a small positive number determining the accuracy of estimation)
+    3. Policy Improvement
+        policy-stable true 
+        For each s element of S:
+            old-action <- pi(s)
+            $ pi(s) <- underset{a}{argmax} sum_{s', r}p(s', r | s, pi(s))[r + gamma V(s')]   $
+            If old-action != pi(s), then policy-stable false
+        If policy-stable, then stop and return V almost equal to v* and pi almost equal to pi*; else go to 2
+    '''
     def __init__(
         self, env, step_cost:float = -1, gamma:float = 0.5, 
         noise:float = .0, epsilon:float = 1e-4, plot_name:str = 'grid_world'
         ):
         """
         Initializes the grid world
-        - env: grid_environment: A tabular environment created by Make class
+        - env: grid_environment: A tabular environment created by MakeGrid class
         - step_cost: float: cost of moving in the environment
         - gamma: float: discount factor
         - noise: float: probability of taking a action that is not the one chosen
@@ -40,6 +58,9 @@ class DP():
         self.noise = noise
         self.env = env
         self.plot_name = plot_name
+
+        self.logger = logging.getLogger("DynamicsProgramming")
+        self.logger.info("Running DP")
 
     def prob_of_action(self, action:str):
         """

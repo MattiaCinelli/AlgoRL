@@ -5,11 +5,11 @@
 
 # Local imports
 from algorl.logs import logging
-from algorl.src.grid_environment import Make
+from algorl.src.grid_environment import MakeGrid
 from algorl.src.MC import MCPrediction, FirstVisitMCPredictions, MCExploringStarts
 
 def print_tab_A():
-    env = Make(
+    env = MakeGrid(
         walls = [(1, 1)], 
         terminal_states = {(0, 3): 1, (1, 3): -10}
         )
