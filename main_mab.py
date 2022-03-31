@@ -50,6 +50,4 @@ def main():
 if __name__ == "__main__":
     main()
     BernoulliThompsonSampling()
-    # bandits = Bandits(number_of_arms = 5)
-    # ts = ThompsonSampling(bandit=bandits, bandit_type = "BernGreedy")
 

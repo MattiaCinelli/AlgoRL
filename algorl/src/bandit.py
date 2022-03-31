@@ -8,7 +8,6 @@ import pandas as pd
 import numpy as np
 from typing import List
 import matplotlib.pyplot as plt
-from pyrsistent import v
 from icecream import ic
 
 # Local imports
@@ -320,8 +319,6 @@ class GBA(): #TODO
         self.average_reward =+ (reward - self.average_reward)/(num+1)
         
         one_hot = np.zeros(self.bandit.bandit_df.shape[1])
-        # print()
-
         one_hot[string.ascii_uppercase.index(action)] = 1
 
         
