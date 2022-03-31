@@ -329,7 +329,7 @@ class GBA(): #TODO
             for x in one_hot - self.action_prob]
 
 
-class ThompsonSampling(MABFunctions):
+class BernoulliThompsonSampling(MABFunctions):
     """
     The Thompson sampling strategy is a sample- based probability matching strategy that allows us to use 
     Bayesian techniques to balance the exploration and exploitation trade-off.
@@ -413,3 +413,5 @@ class ThompsonSampling(MABFunctions):
         return np.random.choice(
             self.bandit.bandit_df.loc['theta_hat', :][self.bandit.bandit_df.loc['theta_hat', :] ==\
                 self.bandit.bandit_df.loc['theta_hat', :].max()].index)
+
+class GaussianThompsonSampling(MABFunctions):

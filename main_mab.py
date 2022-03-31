@@ -17,15 +17,15 @@ def GreedyAlgo():
     greedy.simulate(time = 500)
     bandits.plot_true_mean_vs_estimation()
 
-def BernoulliThompsonSampling():
+def BernoulliThompsonSampling_test():
     bernoulli_bandits = BernoulliBandits(number_of_arms = 5)#, q_mean=[0.4, 0.6, 0.7, 0.8, 0.9])
     # BernTS
-    ts = ThompsonSampling(bandit=bernoulli_bandits, bandit_type = "BernTS")
+    ts = BernoulliThompsonSampling(bandit=bernoulli_bandits, bandit_type = "BernTS")
     BernTS_return, BernTS_actions = ts.simulate(time=100)
     bernoulli_bandits.plot_true_mean_vs_estimation(y_axis = 'theta_hat')
 
     # BernGreedy
-    ts = ThompsonSampling(bandit=bernoulli_bandits, bandit_type = "BernGreedy")
+    ts = BernoulliThompsonSampling(bandit=bernoulli_bandits, bandit_type = "BernGreedy")
     BernGreedy_return, BernGreedy_actions = ts.simulate(time=100)
 
     TestAll().plot_returns(pd.DataFrame({
@@ -49,5 +49,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-    BernoulliThompsonSampling()
+    BernoulliThompsonSampling_test()
 
