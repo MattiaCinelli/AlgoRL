@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from typing import List
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm 
 from icecream import ic
 
 # Local imports
@@ -51,10 +52,12 @@ class TestAll(object):
         return self.df_return, self.df_action
 
     def _comparing_plots(self, arg0, arg1, pic_name):
-        plt.figure(figsize=(10, 5))
-        arg0.plot.line()
+        arg0.plot.line(figsize=(10, 5))
         plt.xlabel("Steps")
         plt.ylabel(arg1)
+        plt.title(f"{pic_name}")
+        plt.legend(bbox_to_anchor=(1., .75))
+        plt.tight_layout() 
         plt.savefig(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
         plt.close()
 
@@ -115,8 +118,9 @@ class Bandits():
         '''
         Scatter plot of true mean vs estimation
         '''
+        colours = cm.rainbow(np.linspace(0, 1, len(self.q_mean)))
         _, ax = plt.subplots(figsize=(7, 5))
-        ax.scatter(self.q_mean, self.bandit_df.loc[y_axis, :], s=100, c=range(len(self.q_mean)))
+        ax.scatter(self.q_mean, self.bandit_df.loc[y_axis, :], c=colours)
         ax.set_xlabel("Target")
         ax.set_ylabel("Estimation")
         ax.set_title("Target vs estimated values")
@@ -329,7 +333,7 @@ class GBA(): #TODO
             for x in one_hot - self.action_prob]
 
 
-class ThompsonSampling(MABFunctions):
+class BernoulliThompsonSampling(MABFunctions):
     """
     The Thompson sampling strategy is a sample- based probability matching strategy that allows us to use 
     Bayesian techniques to balance the exploration and exploitation trade-off.
@@ -370,16 +374,12 @@ class ThompsonSampling(MABFunctions):
 
     """
     def __init__(
-        self, bandit:Bandits, alpha = 1, beta = 1, bandit_type:str='Gaussian',
-        epsilon:float=.1, sample_averages:bool=True, step_size:float=0.1
+        self, bandit:Bandits, alpha = 1, beta = 1, bandit_type:str='BernTS',
         ) -> None:
         self.bandit = bandit
         self.alpha = alpha
         self.beta = beta
         self.bandit_type = bandit_type
-        self.epsilon = epsilon
-        self.sample_averages = sample_averages
-        self.step_size = step_size
         self.tot_return = []
 
     def _step(self, action) -> None:
@@ -413,3 +413,66 @@ class ThompsonSampling(MABFunctions):
         return np.random.choice(
             self.bandit.bandit_df.loc['theta_hat', :][self.bandit.bandit_df.loc['theta_hat', :] ==\
                 self.bandit.bandit_df.loc['theta_hat', :].max()].index)
+
+class GaussianThompsonSampling(MABFunctions):
+    '''
+    https://en.wikipedia.org/wiki/Conjugate_prior
+    Normal with known variance σ2
+
+    Conjugate Bayesian analysis of the Gaussian distribution
+    https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf
+
+    Example 4.1, pag 21
+    A tutorial on Thompson sampling, Russo 
+    '''
+    def __init__(
+        self, bandit:Bandits, q_estimation:float=0, estimated_sd:float=100) -> None:
+        self.bandit = bandit
+        self.tot_return = []
+        self.bandit.bandit_df.loc['theta_hat', :] = 0
+        self.bandit.bandit_df.loc['reward', :] = 0
+        self.estimated_sd = [estimated_sd]*self.bandit.bandit_df.shape[1] # prior_sigma
+        self.bandit.bandit_df.loc['estimated_sd', :] = self.estimated_sd  # post_sigma
+        self.q_estimation = [q_estimation]*self.bandit.bandit_df.shape[1] # prior_sigma
+        self.bandit.bandit_df.loc['q_estimation', :] = self.q_estimation  # post_sigma
+
+
+    def _step(self, action) -> None:
+        """
+        This function updates the action value estimates.
+        """
+        logger.debug(action)
+        
+        # Compute Bernoulli distribution
+        reward = np.random.normal(
+            self.bandit.bandit_df[action]['target'], 
+            self.bandit.bandit_df[action]['true_sd'], size=1)[0]
+        logger.debug(reward)
+
+        self.bandit.bandit_df[action]['reward'] += reward
+        self.bandit.bandit_df[action]['action_count'] += 1
+        
+        # Normalwith known variance σ**2
+        self.bandit.bandit_df.loc['estimated_sd', :] =\
+             np.sqrt((
+                 1 / np.array(self.estimated_sd)**2 +\
+                 self.bandit.bandit_df.loc['action_count', :] / self.bandit.bandit_df.loc['true_sd', :]**2)**-1)
+       
+        # sys.exit()
+        self.bandit.bandit_df.loc['q_estimation', :] =\
+             (self.bandit.bandit_df.loc['estimated_sd', :]**2)*((np.array(self.q_estimation)/ np.array(self.estimated_sd)**2) +\
+                 (self.bandit.bandit_df.loc['reward', :]/self.bandit.bandit_df.loc['true_sd', :]**2))
+        # ic(self.bandit.bandit_df)
+        # sys.exit()
+        return reward
+
+    def _act(self, num:int) -> str:        
+        # Compute value from estimated distribution 
+        self.bandit.bandit_df.loc['theta_hat', :] = \
+            np.random.normal(self.bandit.bandit_df.loc['q_estimation', :], self.bandit.bandit_df.loc['estimated_sd', :])
+        logger.debug(self.bandit.bandit_df.loc['theta_hat', :])
+
+        # select action
+        return( np.random.choice(
+            self.bandit.bandit_df.loc['action_count', :][self.bandit.bandit_df.loc['theta_hat', :] ==\
+                self.bandit.bandit_df.loc['theta_hat', :].max()].index) )
