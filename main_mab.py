@@ -48,6 +48,13 @@ def main():
     test_all.plot_action_taken(best_actions)
 
 if __name__ == "__main__":
-    main()
-    BernoulliThompsonSampling_test()
+    # main()
+    # BernoulliThompsonSampling_test()
+    bandit = Bandits(number_of_arms = 5)
+    gts = GaussianThompsonSampling(bandit=bandit)
+    
+    gts.simulate(time=500)
+    print(gts.bandit.bandit_df)
+    bandit.plot_true_mean_vs_estimation()
+    
 
