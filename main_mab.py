@@ -33,13 +33,21 @@ def BernoulliThompsonSampling_test():
     TestAll().plot_action_taken(pd.DataFrame({ 
         'BernTS':BernTS_actions, 'BernGreedy':BernGreedy_actions}))
     
-def main():
+def GaussianThompsonSampling_test():
+    bandit = Bandits(number_of_arms = 5)
+    gts = GaussianThompsonSampling(bandit=bandit)
+    gts.simulate(time=500)    
+    bandit.plot_true_mean_vs_estimation()
+    print(gts.bandit.bandit_df)
+
+def main(arms=5, number_of_trials=5):
     """Runs the main script"""
     logger.info("Starting TestAll MAB")
-    test_all = TestAll(#q_mean=[1,2,3,4,5]
+    test_all = TestAll(arms=arms, number_of_trials=number_of_trials #q_mean=[1,2,3,4,5]
     )
     test_all.test_algo(OnlyExploration)
     test_all.test_algo(OnlyExploitation)
+    test_all.test_algo(GaussianThompsonSampling)
     for epsilon in [.1, .5, .9]:
         test_all.test_algo(Greedy, f"Greedy {epsilon}")
         test_all.test_algo(UCB, f"UCB {epsilon}")
@@ -48,13 +56,7 @@ def main():
     test_all.plot_action_taken(best_actions)
 
 if __name__ == "__main__":
-    # main()
+    main(arms=5, number_of_trials=100
+    )
     # BernoulliThompsonSampling_test()
-    bandit = Bandits(number_of_arms = 5)
-    gts = GaussianThompsonSampling(bandit=bandit)
-    
-    gts.simulate(time=500)
-    print(gts.bandit.bandit_df)
-    bandit.plot_true_mean_vs_estimation()
-    
-
+    # GaussianThompsonSampling_test()
