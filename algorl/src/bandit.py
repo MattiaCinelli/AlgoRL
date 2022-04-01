@@ -390,6 +390,10 @@ class BernoulliThompsonSampling(MABFunctions):
         # Compute Bernoulli distribution
         reward = np.random.binomial(1, self.bandit.bandit_df[action]['target'], size=1)[0]
         logger.debug(reward)
+        #  Try to join a reward from gaussian associated with the action
+        # print(action, ord(action.lower()) - 96)
+        # reward = 0 if reward == 0 else np.random.normal(ord(action.lower()) - 96, 1, size=1)[0]
+        print(reward)
         self.bandit.bandit_df[action]['action_count'] += 1
         self.bandit.bandit_df[action]['alpha'] += reward
         self.bandit.bandit_df[action]['beta'] += 1-reward
@@ -401,6 +405,7 @@ class BernoulliThompsonSampling(MABFunctions):
             self.bandit.bandit_df.loc['theta_hat', :] = \
                 np.random.beta(a=self.bandit.bandit_df.loc['alpha', :], b=self.bandit.bandit_df.loc['beta', :])
             logger.debug(self.bandit.bandit_df.loc['theta_hat', :])
+
         elif self.bandit_type == 'BernGreedy':
             # Compute Bernoulli distributions
             self.bandit.bandit_df.loc['theta_hat', :] = \
@@ -413,6 +418,7 @@ class BernoulliThompsonSampling(MABFunctions):
         return np.random.choice(
             self.bandit.bandit_df.loc['theta_hat', :][self.bandit.bandit_df.loc['theta_hat', :] ==\
                 self.bandit.bandit_df.loc['theta_hat', :].max()].index)
+
 
 class GaussianThompsonSampling(MABFunctions):
     '''
