@@ -20,12 +20,12 @@ def GreedyAlgo():
 def BernoulliThompsonSampling_test():
     bernoulli_bandits = BernoulliBandits(number_of_arms = 5)#, q_mean=[0.4, 0.6, 0.7, 0.8, 0.9])
     # BernTS
-    ts = BernoulliThompsonSampling(bandit=bernoulli_bandits, bandit_type = "BernTS")
+    ts = BernoulliThompsonSampling(bandits=bernoulli_bandits, bandit_type = "BernTS")
     BernTS_return, BernTS_actions = ts.simulate(time=100)
     bernoulli_bandits.plot_true_mean_vs_estimation(y_axis = 'theta_hat')
 
     # BernGreedy
-    ts = BernoulliThompsonSampling(bandit=bernoulli_bandits, bandit_type = "BernGreedy")
+    ts = BernoulliThompsonSampling(bandits=bernoulli_bandits, bandit_type = "BernGreedy")
     BernGreedy_return, BernGreedy_actions = ts.simulate(time=100)
 
     TestAll().plot_returns(pd.DataFrame({
@@ -34,11 +34,11 @@ def BernoulliThompsonSampling_test():
         'BernTS':BernTS_actions, 'BernGreedy':BernGreedy_actions}))
     
 def GaussianThompsonSampling_test():
-    bandit = Bandits(number_of_arms = 5)
-    gts = GaussianThompsonSampling(bandit=bandit)
+    bandits = Bandits(number_of_arms = 5)
+    gts = GaussianThompsonSampling(bandits=bandits)
     gts.simulate(time=500)    
-    bandit.plot_true_mean_vs_estimation()
-    print(gts.bandit.bandit_df)
+    bandits.plot_true_mean_vs_estimation()
+    print(gts.bandits.bandit_df)
 
 def main(arms=5, number_of_trials=5):
     """Runs the main script"""
@@ -56,11 +56,6 @@ def main(arms=5, number_of_trials=5):
     test_all.plot_action_taken(best_actions)
 
 if __name__ == "__main__":
-    # main(arms=5, number_of_trials=100)
-    # BernoulliThompsonSampling_test()
-    # GaussianThompsonSampling_test()
-    bernoulli_bandits = BernoulliBandits(number_of_arms = 5)#, q_mean=[0.4, 0.6, 0.7, 0.8, 0.9])
-    # BernTS
-    ts = BernoulliThompsonSampling(bandit=bernoulli_bandits, bandit_type = "BernTS")
-    BernTS_return, BernTS_actions = ts.simulate(time=100)
-    bernoulli_bandits.plot_true_mean_vs_estimation(y_axis = 'theta_hat')
+    main(arms=5, number_of_trials=100)
+    BernoulliThompsonSampling_test()
+    GaussianThompsonSampling_test()

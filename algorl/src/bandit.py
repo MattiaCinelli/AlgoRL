@@ -38,13 +38,13 @@ class TestAll(object):
         for _ in range(self.number_of_trials):
             logger.info("\ttest: {}".format(_))
             #1 New bandits
-            bandit = Bandits(number_of_arms = self.arms)
+            bandits = Bandits(number_of_arms = self.arms)
             #2 Simulate
-            explore = algo(bandit)
+            explore = algo(bandits)
             reward, best_action =  explore.simulate(time = self.time_steps)
             rewards.append(np.cumsum(reward))
             best_actions.append(best_action)
-            bandit.reset_bandit_df()
+            bandits.reset_bandit_df()
         self.df_return[f"{col_name}"] = pd.Series(np.mean([rewards], axis=1)[0], index=range(self.time_steps))
         self.df_action[f"{col_name}"] = pd.Series(np.mean([best_actions], axis=1)[0], index=range(self.time_steps))
     
@@ -71,6 +71,7 @@ class TestAll(object):
 
 
 class Bandits():
+    logger.info("Initialize bandits")
     def __init__(
         self, 
         number_of_arms:int = 10,
@@ -134,6 +135,7 @@ class Bandits():
 
 
 class BernoulliBandits(Bandits):
+    logger.info("Initialize Bernoulli Bandits")
     def __init__(
         self, number_of_arms: int = 10, q_mean: List[float] = None, q_sd: List[float] = None, 
         initial: float = 1, bandit_name: List[str] = None, images_dir: str = 'images') -> None:
@@ -150,6 +152,9 @@ class BernoulliBandits(Bandits):
 
 
 class MABFunctions(object):
+    '''
+    Parent class that contains functions that are used in multiple algorithms
+    '''
     def __init__(self) -> None:
         pass
 
@@ -158,27 +163,27 @@ class MABFunctions(object):
         This function updates the action value estimates.
         """
         reward = np.random.normal(
-            self.bandit.bandit_df[action]['target'], 
-            self.bandit.bandit_df[action]['estimated_sd'], size=1)[0]
-        self.bandit.bandit_df[action]['action_count'] += 1
+            self.bandits.bandit_df[action]['target'], 
+            self.bandits.bandit_df[action]['estimated_sd'], size=1)[0]
+        self.bandits.bandit_df[action]['action_count'] += 1
 
         if self.sample_averages:
-            self.bandit.bandit_df[action]['q_estimation'] =\
-                self.bandit.bandit_df[action]['q_estimation']+\
-                (reward - self.bandit.bandit_df[action]['q_estimation'])/\
-                    self.bandit.bandit_df[action]['action_count']
+            self.bandits.bandit_df[action]['q_estimation'] =\
+                self.bandits.bandit_df[action]['q_estimation']+\
+                (reward - self.bandits.bandit_df[action]['q_estimation'])/\
+                    self.bandits.bandit_df[action]['action_count']
         else:
-            self.bandit.bandit_df[action]['q_estimation'] =\
-                self.bandit.bandit_df[action]['q_estimation'] +\
+            self.bandits.bandit_df[action]['q_estimation'] =\
+                self.bandits.bandit_df[action]['q_estimation'] +\
                     self.step_size *\
-                         (reward - self.bandit.bandit_df[action]['q_estimation'])
+                         (reward - self.bandits.bandit_df[action]['q_estimation'])
         return reward
 
     def simulate(self, time:int)-> None:
         """
         This function simulates the action taking process.
         """
-        best_action = self.bandit.return_bandit_df().loc['target', :].idxmax()
+        best_action = self.bandits.return_bandit_df().loc['target', :].idxmax()
         best_action_count = 0
         best_action_percentage = []
         for num in range(time):
@@ -192,10 +197,11 @@ class MABFunctions(object):
 
 
 class OnlyExploration(MABFunctions):
+    logger.info("Initialize OnlyExploration")
     def __init__(
-        self, bandit:Bandits, sample_averages:bool=True, 
+        self, bandits:Bandits, sample_averages:bool=True, 
         step_size:float=0.1) -> None:
-        self.bandit = bandit
+        self.bandits = bandits
         self.tot_return = []
         self.sample_averages = sample_averages
         self.step_size = step_size
@@ -204,14 +210,15 @@ class OnlyExploration(MABFunctions):
         """
         This function returns a random action 
         """
-        return np.random.choice(self.bandit.bandit_name)
+        return np.random.choice(self.bandits.bandit_name)
 
 
 class OnlyExploitation(MABFunctions):
+    logger.info("Initialize OnlyExploitation")
     def __init__(
-        self, bandit:Bandits, sample_averages:bool=True, 
+        self, bandits:Bandits, sample_averages:bool=True, 
         step_size:float=0.1) -> None:
-        self.bandit = bandit
+        self.bandits = bandits
         self.tot_return = []
         self.sample_averages = sample_averages
         self.step_size = step_size
@@ -220,7 +227,7 @@ class OnlyExploitation(MABFunctions):
         """
         This function returns a random action 
         """
-        return self.bandit.return_bandit_df().loc['target', :].idxmax()
+        return self.bandits.return_bandit_df().loc['target', :].idxmax()
 
 
 class Greedy(MABFunctions):
@@ -228,22 +235,23 @@ class Greedy(MABFunctions):
     This code allows pure, epsilon-greedy with action value or step size with or without optimistic initial values. 
     Page 32 of Sutton and Barto.
 
-    A simple bandit algorithm
+    A simple bandits algorithm
     Initialize, for a = 1 to k: 
     Q(a) <- 0
     N(a) <- 0
     Loop for⇢ever:
         A <- either: arg max_a Q(a) with probability 1 - e (breaking ties randomly)
             or: a random action with probability e
-        R <- bandit(A)
+        R <- bandits(A)
         N(A) N(A)+1
         Q(A) Q(A)+ 1/N(A) * (R - Q(A))
     """
+    logger.info("Initialize Greedy")
     def __init__(
-        self, bandit:Bandits, epsilon:float=.1, 
+        self, bandits:Bandits, epsilon:float=.1, 
         sample_averages:bool=True, step_size:float=0.1
         ) -> None:
-        self.bandit = bandit
+        self.bandits = bandits
         self.epsilon = epsilon
         self.sample_averages = sample_averages
         self.step_size = step_size
@@ -254,10 +262,10 @@ class Greedy(MABFunctions):
         This function returns the action to be taken based on the epsilon greedy policy.
         """
         if np.random.rand() < self.epsilon:
-            return np.random.choice(self.bandit.bandit_name)
+            return np.random.choice(self.bandits.bandit_name)
         return np.random.choice(
-                self.bandit.bandit_df.loc['q_estimation', :][self.bandit.bandit_df.loc['q_estimation', :] ==\
-                    self.bandit.bandit_df.loc['q_estimation', :].max()].index)
+                self.bandits.bandit_df.loc['q_estimation', :][self.bandits.bandit_df.loc['q_estimation', :] ==\
+                    self.bandits.bandit_df.loc['q_estimation', :].max()].index)
 
 
 class UCB(MABFunctions):
@@ -265,11 +273,12 @@ class UCB(MABFunctions):
     Upper Confidence Bound (UCB) algorithm.
     Page 35 of Sutton and Barto.
     """
+    logger.info("Initialize UCB")
     def __init__(
-        self, bandit:Bandits, 
+        self, bandits:Bandits, 
         sample_averages:bool=True, step_size:float=0.1, UCB_param:float=0.1, epsilon:float=.1
         ) -> None:
-        self.bandit = bandit
+        self.bandits = bandits
         self.UCB_param = UCB_param
         self.sample_averages = sample_averages
         self.step_size = step_size
@@ -278,25 +287,26 @@ class UCB(MABFunctions):
 
     def _act(self, num:int) -> pd.DataFrame:
         if np.random.rand() < self.epsilon:
-            return np.random.choice(self.bandit.bandit_name)
+            return np.random.choice(self.bandits.bandit_name)
 
-        UCB_estimation = self.bandit.bandit_df.loc['q_estimation', :] + \
+        UCB_estimation = self.bandits.bandit_df.loc['q_estimation', :] + \
             self.UCB_param * np.sqrt(
-                np.log(num + 1) / (self.bandit.bandit_df.loc['action_count', :] + 1e-5))
+                np.log(num + 1) / (self.bandits.bandit_df.loc['action_count', :] + 1e-5))
         
-        return self.bandit.bandit_df.columns[np.random.choice(np.where(UCB_estimation == np.max(UCB_estimation))[0])]
+        return self.bandits.bandit_df.columns[np.random.choice(np.where(UCB_estimation == np.max(UCB_estimation))[0])]
 
 
 class GBA(): #TODO
     """
-    Gradient Bandit Algorithm
+    Gradient bandits Algorithm
     Page 37 of Sutton and Barto.
     """
+    logger.info("Initialize GBA")
     def __init__(
-        self, bandit:Bandits, 
+        self, bandits:Bandits, 
         sample_averages:bool=True, step_size:float=0.1, gradient_baseline=True, epsilon:float=.1
         ) -> None:
-        self.bandit = bandit
+        self.bandits = bandits
         self.sample_averages = sample_averages
         self.step_size = step_size
         self.gradient_baseline = gradient_baseline
@@ -304,32 +314,32 @@ class GBA(): #TODO
         self.average_reward = 0
 
     def _act(self):
-        exp_est = np.exp(self.bandit.bandit_df.loc['q_estimation', :])
+        exp_est = np.exp(self.bandits.bandit_df.loc['q_estimation', :])
         self.action_prob = exp_est / np.sum(exp_est)
 
         if np.random.rand() < self.epsilon:
-            return np.random.choice(self.bandit.bandit_name)
+            return np.random.choice(self.bandits.bandit_name)
 
-        return np.random.choice(self.bandit.bandit_df.columns, p=self.action_prob)
+        return np.random.choice(self.bandits.bandit_df.columns, p=self.action_prob)
 
     def _step(self, action, num) -> None:
         """
         This function updates the action value estimates.
         """
         reward = np.random.normal(
-            self.bandit.bandit_df[action]['target'], 
-            self.bandit.bandit_df[action]['estimated_sd'], size=1)[0]
-        self.bandit.bandit_df[action]['action_count'] += 1
+            self.bandits.bandit_df[action]['target'], 
+            self.bandits.bandit_df[action]['estimated_sd'], size=1)[0]
+        self.bandits.bandit_df[action]['action_count'] += 1
         self.average_reward =+ (reward - self.average_reward)/(num+1)
         
-        one_hot = np.zeros(self.bandit.bandit_df.shape[1])
+        one_hot = np.zeros(self.bandits.bandit_df.shape[1])
         one_hot[string.ascii_uppercase.index(action)] = 1
 
         
         baseline = self.average_reward if self.gradient_baseline else 0
 
-        self.bandit.bandit_df.loc['q_estimation', :] =\
-            [(self.bandit.bandit_df[action]['q_estimation']+ self.step_size * (reward - baseline))*x 
+        self.bandits.bandit_df.loc['q_estimation', :] =\
+            [(self.bandits.bandit_df[action]['q_estimation']+ self.step_size * (reward - baseline))*x 
             for x in one_hot - self.action_prob]
 
 
@@ -373,10 +383,11 @@ class BernoulliThompsonSampling(MABFunctions):
     end for
 
     """
+    logger.info("Initialize BernoulliThompsonSampling")
     def __init__(
-        self, bandit:Bandits, alpha = 1, beta = 1, bandit_type:str='BernTS',
+        self, bandits:Bandits, alpha = 1, beta = 1, bandit_type:str='BernTS',
         ) -> None:
-        self.bandit = bandit
+        self.bandits = bandits
         self.alpha = alpha
         self.beta = beta
         self.bandit_type = bandit_type
@@ -388,36 +399,33 @@ class BernoulliThompsonSampling(MABFunctions):
         """
         logger.debug(action)
         # Compute Bernoulli distribution
-        reward = np.random.binomial(1, self.bandit.bandit_df[action]['target'], size=1)[0]
+        reward = np.random.binomial(1, self.bandits.bandit_df[action]['target'], size=1)[0]
         logger.debug(reward)
-        #  Try to join a reward from gaussian associated with the action
-        # print(action, ord(action.lower()) - 96)
-        # reward = 0 if reward == 0 else np.random.normal(ord(action.lower()) - 96, 1, size=1)[0]
-        print(reward)
-        self.bandit.bandit_df[action]['action_count'] += 1
-        self.bandit.bandit_df[action]['alpha'] += reward
-        self.bandit.bandit_df[action]['beta'] += 1-reward
+
+        self.bandits.bandit_df[action]['action_count'] += 1
+        self.bandits.bandit_df[action]['alpha'] += reward
+        self.bandits.bandit_df[action]['beta'] += 1-reward
         return reward
 
     def _act(self, num:int) -> str:        
         if self.bandit_type == 'BernTS':
             # Compute Bernoulli distributions
-            self.bandit.bandit_df.loc['theta_hat', :] = \
-                np.random.beta(a=self.bandit.bandit_df.loc['alpha', :], b=self.bandit.bandit_df.loc['beta', :])
-            logger.debug(self.bandit.bandit_df.loc['theta_hat', :])
+            self.bandits.bandit_df.loc['theta_hat', :] = \
+                np.random.beta(a=self.bandits.bandit_df.loc['alpha', :], b=self.bandits.bandit_df.loc['beta', :])
+            logger.debug(self.bandits.bandit_df.loc['theta_hat', :])
 
         elif self.bandit_type == 'BernGreedy':
             # Compute Bernoulli distributions
-            self.bandit.bandit_df.loc['theta_hat', :] = \
-                self.bandit.bandit_df.loc['alpha', :]/(self.bandit.bandit_df.loc['alpha', :]+self.bandit.bandit_df.loc['beta', :])
-            logger.debug(self.bandit.bandit_df.loc['theta_hat', :])
+            self.bandits.bandit_df.loc['theta_hat', :] = \
+                self.bandits.bandit_df.loc['alpha', :]/(self.bandits.bandit_df.loc['alpha', :]+self.bandits.bandit_df.loc['beta', :])
+            logger.debug(self.bandits.bandit_df.loc['theta_hat', :])
         else:
-            raise ValueError(f'Bandit type {self.bandit_type} not supported')
+            raise ValueError(f'bandits type {self.bandit_type} not supported')
 
         # select action
         return np.random.choice(
-            self.bandit.bandit_df.loc['theta_hat', :][self.bandit.bandit_df.loc['theta_hat', :] ==\
-                self.bandit.bandit_df.loc['theta_hat', :].max()].index)
+            self.bandits.bandit_df.loc['theta_hat', :][self.bandits.bandit_df.loc['theta_hat', :] ==\
+                self.bandits.bandit_df.loc['theta_hat', :].max()].index)
 
 
 class GaussianThompsonSampling(MABFunctions):
@@ -431,16 +439,17 @@ class GaussianThompsonSampling(MABFunctions):
     Example 4.1, pag 21
     A tutorial on Thompson sampling, Russo 
     '''
+    logger.info("Initialize GaussianThompsonSampling")
     def __init__(
-        self, bandit:Bandits, q_estimation:float=0, estimated_sd:float=100) -> None:
-        self.bandit = bandit
+        self, bandits:Bandits, q_estimation:float=0, estimated_sd:float=100) -> None:
+        self.bandits = bandits
         self.tot_return = []
-        self.bandit.bandit_df.loc['theta_hat', :] = 0
-        self.bandit.bandit_df.loc['reward', :] = 0
-        self.estimated_sd = [estimated_sd]*self.bandit.bandit_df.shape[1] # prior_sigma
-        self.bandit.bandit_df.loc['estimated_sd', :] = self.estimated_sd  # post_sigma
-        self.q_estimation = [q_estimation]*self.bandit.bandit_df.shape[1] # prior_sigma
-        self.bandit.bandit_df.loc['q_estimation', :] = self.q_estimation  # post_sigma
+        self.bandits.bandit_df.loc['theta_hat', :] = 0
+        self.bandits.bandit_df.loc['reward', :] = 0
+        self.estimated_sd = [estimated_sd]*self.bandits.bandit_df.shape[1] # prior_sigma
+        self.bandits.bandit_df.loc['estimated_sd', :] = self.estimated_sd  # post_sigma
+        self.q_estimation = [q_estimation]*self.bandits.bandit_df.shape[1] # prior_sigma
+        self.bandits.bandit_df.loc['q_estimation', :] = self.q_estimation  # post_sigma
 
 
     def _step(self, action) -> None:
@@ -451,34 +460,34 @@ class GaussianThompsonSampling(MABFunctions):
         
         # Compute Bernoulli distribution
         reward = np.random.normal(
-            self.bandit.bandit_df[action]['target'], 
-            self.bandit.bandit_df[action]['true_sd'], size=1)[0]
+            self.bandits.bandit_df[action]['target'], 
+            self.bandits.bandit_df[action]['true_sd'], size=1)[0]
         logger.debug(reward)
 
-        self.bandit.bandit_df[action]['reward'] += reward
-        self.bandit.bandit_df[action]['action_count'] += 1
+        self.bandits.bandit_df[action]['reward'] += reward
+        self.bandits.bandit_df[action]['action_count'] += 1
         
         # Normalwith known variance σ**2
-        self.bandit.bandit_df.loc['estimated_sd', :] =\
+        self.bandits.bandit_df.loc['estimated_sd', :] =\
              np.sqrt((
                  1 / np.array(self.estimated_sd)**2 +\
-                 self.bandit.bandit_df.loc['action_count', :] / self.bandit.bandit_df.loc['true_sd', :]**2)**-1)
+                 self.bandits.bandit_df.loc['action_count', :] / self.bandits.bandit_df.loc['true_sd', :]**2)**-1)
        
         # sys.exit()
-        self.bandit.bandit_df.loc['q_estimation', :] =\
-             (self.bandit.bandit_df.loc['estimated_sd', :]**2)*((np.array(self.q_estimation)/ np.array(self.estimated_sd)**2) +\
-                 (self.bandit.bandit_df.loc['reward', :]/self.bandit.bandit_df.loc['true_sd', :]**2))
-        # ic(self.bandit.bandit_df)
+        self.bandits.bandit_df.loc['q_estimation', :] =\
+             (self.bandits.bandit_df.loc['estimated_sd', :]**2)*((np.array(self.q_estimation)/ np.array(self.estimated_sd)**2) +\
+                 (self.bandits.bandit_df.loc['reward', :]/self.bandits.bandit_df.loc['true_sd', :]**2))
+        # ic(self.bandits.bandit_df)
         # sys.exit()
         return reward
 
     def _act(self, num:int) -> str:        
         # Compute value from estimated distribution 
-        self.bandit.bandit_df.loc['theta_hat', :] = \
-            np.random.normal(self.bandit.bandit_df.loc['q_estimation', :], self.bandit.bandit_df.loc['estimated_sd', :])
-        logger.debug(self.bandit.bandit_df.loc['theta_hat', :])
+        self.bandits.bandit_df.loc['theta_hat', :] = \
+            np.random.normal(self.bandits.bandit_df.loc['q_estimation', :], self.bandits.bandit_df.loc['estimated_sd', :])
+        logger.debug(self.bandits.bandit_df.loc['theta_hat', :])
 
         # select action
         return( np.random.choice(
-            self.bandit.bandit_df.loc['action_count', :][self.bandit.bandit_df.loc['theta_hat', :] ==\
-                self.bandit.bandit_df.loc['theta_hat', :].max()].index) )
+            self.bandits.bandit_df.loc['action_count', :][self.bandits.bandit_df.loc['theta_hat', :] ==\
+                self.bandits.bandit_df.loc['theta_hat', :].max()].index) )
