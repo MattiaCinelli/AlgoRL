@@ -112,10 +112,10 @@ class Bandits():
         plt.savefig(Path(self.images_dir, f'{self.number_of_arms}-bandits.png'), dpi=300)
         plt.close()
 
-    def return_bandit_df(self):
+    def return_bandit_df(self) -> pd.DataFrame:
         return self.bandit_df
 
-    def plot_true_mean_vs_estimation(self, pic_name:str='TargetVsEstimation', y_axis='q_estimation'):
+    def plot_true_mean_vs_estimation(self, pic_name:str='TargetVsEstimation', y_axis:str='q_estimation')-> None:
         '''
         Scatter plot of true mean vs estimation
         '''

@@ -57,5 +57,5 @@ def main(arms=5, number_of_trials=5):
 
 if __name__ == "__main__":
     main(arms=5, number_of_trials=100)
-    BernoulliThompsonSampling_test()
-    GaussianThompsonSampling_test()
+    # BernoulliThompsonSampling_test()
+    # GaussianThompsonSampling_test()
