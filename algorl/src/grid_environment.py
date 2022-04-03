@@ -1,5 +1,6 @@
 """Simple script to run snips of code"""
 # Standard Libraries
+from email import policy
 import sys
 from pathlib import Path
 
@@ -8,6 +9,7 @@ import numpy as np
 import pandas as pd
 from itertools import product
 import matplotlib.pyplot as plt
+import matplotlib.animation as ani
 from matplotlib.table import Table
 from typing import List, Dict, Tuple, Optional, Set
 
@@ -93,68 +95,96 @@ class MakeGrid():
             tb.add_cell(i,-1, width, height, text=i, loc='right', edgecolor='none', facecolor='none',)
 
         for i in range(self.grid_col):
-            tb.add_cell(-1, i, width, height / 2, text=i, loc='center', edgecolor='none', facecolor='none',)
+            tb.add_cell(4, i, width, height / 4, text=i, loc='center', edgecolor='none', facecolor='none',)
         ax.add_table(tb)
+
+    def drew_statevalue_and_policy(self, plot_name:str):
+        fig, (st_value, policy) = plt.subplots(1, 2, figsize=(12, 5))
+        fig.suptitle('Dynamic Programming')
+
+        st_value.set_title('State values')
+        policy.set_title('Best Policy')
+
+        width, height = 1.0/self.grid_col, 1.0/self.grid_row
+
+        st_value.set_axis_off()
+        policy.set_axis_off()
+        tb_st_value = Table(st_value, bbox=[0, 0, 1, 1])
+        tb_policy = Table(policy, bbox=[0, 0, 1, 1])
+
+        # Add cells
+        for (i, j), val in np.ndenumerate(self.grid):
+            # State value
+            tb_st_value = self._state_value_sub_method(tb_st_value, i, j, val, width, height)
+
+            # Policy
+            tb_policy = self._state_value_sub_policy(tb_policy, i, j, val, width, height)
+
+        self._drew_grid(tb_st_value, width, height, st_value)
+        self._drew_grid(tb_policy, width, height, policy)
         
+        plt.savefig(Path(self.images_dir, f'{plot_name}_ST_and_policy.png'), dpi=300)       
 
     def draw_state_value(self, plot_name:str):
         _, ax = plt.subplots()
         ax.set_axis_off()
         tb = Table(ax, bbox=[0, 0, 1, 1])
-
-        width = 1.0/self.grid_col
-        height = 1.0/self.grid_row 
-
+        width, height = 1.0 / self.grid_col, 1.0 / self.grid_row
         # Add cells
         for (i, j), val in np.ndenumerate(self.grid):
-            if np.isnan(val):
-                tb.add_cell(i, j, width, height, loc='center', facecolor='dimgray')
-            elif (i, j) in self.terminal_states_list:
-                if self.grid[i, j]>=0:
-                    tb.add_cell(i, j, width, height, text=val, loc='center', facecolor='lightgreen')
-                else:
-                    tb.add_cell(i, j, width, height, text=np.round(val, 2), loc='center', facecolor='tomato')
-            else:
-                tb.add_cell(i, j, width, height, text=np.round(val, 2), loc='center', facecolor='white')
-
-        self._drew_grid(tb, width, height, ax)
-        plt.savefig(Path(self.images_dir, f'{plot_name}_policy.png'), dpi=300)
-
-
-    def drew_policy(self, plot_name:str):
-        arrow_symbols = {'U':'\u2191', 'D':'\u2193', 'L':'\u2190', 'R':'\u2192'}
-        _, ax = plt.subplots()
-        ax.set_axis_off()
-        tb = Table(ax, bbox=[0, 0, 1, 1])
-
-        width = 1.0/self.grid_col
-        height = 1.0/self.grid_row
-        # Add cells
-        for (i, j), val in np.ndenumerate(self.grid):
-            exploration = [
-                self.grid[self.new_state_given_action((i, j), action)]
-                for action in self.possible_actions
-            ]
-
-            best_actions = [self.possible_actions[x] for x in np.where(np.array(exploration)==max(exploration))[0]]
-
-            if np.isnan(val):
-                tb.add_cell(i, j, width, height, loc='center', facecolor='dimgray')
-            elif (i, j) in self.terminal_states_list:
-                if self.grid[i, j]>=0:
-                    tb.add_cell(i, j, width, height, text=val, loc='center', facecolor='lightgreen')
-                else:
-                    tb.add_cell(i, j, width, height, text=np.round(val, 2), loc='center', facecolor='tomato')
-            else:
-                arrows = "$"
-                for best in best_actions:
-                    arrows += arrow_symbols.get(best)
-                arrows += "$"
-                tb.add_cell(i, j, width, height, text=arrows, loc='center', facecolor='white')
+            tb = self._state_value_sub_method(tb, i, j, val, width, height)
 
         self._drew_grid(tb, width, height, ax)
         plt.savefig(Path(self.images_dir, f'{plot_name}_state_values.png'), dpi=300)
 
+
+    def drew_policy(self, plot_name:str):
+        _, ax = plt.subplots()
+        ax.set_axis_off()
+        tb = Table(ax, bbox=[0, 0, 1, 1])
+        width, height = 1.0/self.grid_col, 1.0/self.grid_row
+
+        # Add cells
+        for (i, j), val in np.ndenumerate(self.grid):
+            tb = self._state_value_sub_policy(tb, i, j, val, width, height)
+
+        self._drew_grid(tb, width, height, ax)
+        plt.savefig(Path(self.images_dir, f'{plot_name}_policy.png'), dpi=300)
+
+    def _state_value_sub_method(self, tb_st_value, i, j, val, width, height):
+        if np.isnan(val):
+            tb_st_value.add_cell(i, j, width, height, loc='center', facecolor='dimgray')
+        elif (i, j) in self.terminal_states_list:
+            if self.grid[i, j]>=0:
+                tb_st_value.add_cell(i, j, width, height, text=val, loc='center', facecolor='lightgreen')
+            else:
+                tb_st_value.add_cell(i, j, width, height, text=np.round(val, 2), loc='center', facecolor='tomato')
+        else:
+            tb_st_value.add_cell(i, j, width, height, text=np.round(val, 2), loc='center', facecolor='white')
+        return tb_st_value
+
+    def _state_value_sub_policy(self, tb_policy, i, j, val, width, height):
+        exploration = [
+            self.grid[self.new_state_given_action((i, j), action)]
+            for action in self.possible_actions
+        ]
+        best_actions = [self.possible_actions[x] for x in np.where(np.array(exploration)==max(exploration))[0]]
+
+        if np.isnan(val):
+            tb_policy.add_cell(i, j, width, height, loc='center', facecolor='dimgray')
+        elif (i, j) in self.terminal_states_list:
+            if self.grid[i, j]>=0:
+                tb_policy.add_cell(i, j, width, height, text=val, loc='center', facecolor='lightgreen')
+            else:
+                tb_policy.add_cell(i, j, width, height, text=np.round(val, 2), loc='center', facecolor='tomato')
+        else:
+            arrows = "$"
+            arrow_symbols = {'U':'\u2191', 'D':'\u2193', 'L':'\u2190', 'R':'\u2192'}
+            for best in best_actions:
+                arrows += arrow_symbols.get(best)
+            arrows += "$"
+            tb_policy.add_cell(i, j, width, height, text=arrows, loc='center', facecolor='white')
+        return tb_policy
 
     def new_state_given_action(self, state, action):
         """ Given a state and an action, returns the new state """

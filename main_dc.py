@@ -18,6 +18,7 @@ def print_tab_A():
     model.compute_state_value()
     model.draw_state_value()
     model.drew_policy()
+    model.drew_statevalue_and_policy()
 
 def print_tab_B():
     env = MakeGrid(
@@ -94,7 +95,7 @@ if __name__ == "__main__":
     logger = logging.getLogger("Main")
     logger.info("Running Main.py")
     print_tab_A()
-    print_tab_B()
-    print_tab_C()
-    print_tab_D()
-    print_tab_E()
+    # print_tab_B()
+    # print_tab_C()
+    # print_tab_D()
+    # print_tab_E()

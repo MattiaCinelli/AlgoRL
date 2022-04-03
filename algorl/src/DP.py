@@ -114,3 +114,6 @@ class DP():
 
     def drew_policy(self):
         self.env.drew_policy(plot_name=self.plot_name)
+
+    def drew_statevalue_and_policy(self):
+        self.env.drew_statevalue_and_policy(plot_name=self.plot_name)
