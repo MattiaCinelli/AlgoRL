@@ -105,10 +105,14 @@ class MakeGrid():
 
     def _drew_grid(self, tb, ax):
         for i in range(self.grid_row):
-            tb.add_cell(i,-1, self.width, self.height, text=i, loc='right', edgecolor='none', facecolor='none',)
+            tb.add_cell(
+                i,-1, self.width, self.height, text=i, 
+                loc='right', edgecolor='none', facecolor='none',)
 
         for i in range(self.grid_col):
-            tb.add_cell(4, i, self.width, self.height / 4, text=i, loc='center', edgecolor='none', facecolor='none',)
+            tb.add_cell(
+                self.grid_row, i, self.width, 1/8, 
+                text=i, loc='center', edgecolor='none', facecolor='none',)
         ax.add_table(tb)
 
     def drew_statevalue_and_policy(self):

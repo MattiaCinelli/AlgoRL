@@ -42,7 +42,7 @@ class DP(object):
     def __init__(
         self, env, step_cost:float = -1, gamma:float = 0.5, 
         noise:float = .0, epsilon:float = 1e-4
-        ):
+        ) -> None:
         """
         Initializes the grid world
         Args:
@@ -63,7 +63,7 @@ class DP(object):
         self.logger = logging.getLogger("DynamicsProgramming")
         self.logger.info("Running DP")
 
-    def prob_of_action(self, action:str):
+    def prob_of_action(self, action:str) -> Dict[str, float]:
         """
         Returns the probability of taking an action
         """
@@ -76,7 +76,10 @@ class DP(object):
             'R': {'R':correct, 'U':wrong, 'D':wrong},
             }[action]
 
-    def get_sweep(self):
+    def get_sweep(self) -> Tuple[np.ndarray, bool]:
+        '''
+        Returns the state value function and whether the policy is stable
+        '''
         new_grid = self.env.grid.copy()
         for state in self.env.available_states:
             exploration = []
@@ -103,7 +106,10 @@ class DP(object):
         else:
             return new_grid, False
 
-    def compute_state_value(self):
+    def simulate(self) -> np.ndarray:
+        '''
+        Simulates the policy iteration algorithm
+        '''
         done = False
         while not done:
             self.env.grid, done = self.get_sweep()

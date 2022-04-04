@@ -14,7 +14,7 @@ def print_tab_A():
     model = DP(
         env=env
         )
-    model.compute_state_value()
+    model.simulate()
     env.draw_state_value()
     env.drew_policy()
     env.drew_statevalue_and_policy()
@@ -32,9 +32,9 @@ def print_tab_B():
         step_cost = -1, 
         gamma = 0.5
         )
-    model.compute_state_value()
-    model.draw_state_value()
-    model.drew_policy()
+    model.simulate()
+    env.draw_state_value()
+    env.drew_policy()
 
 def print_tab_C():
     env = MakeGrid(
@@ -47,9 +47,9 @@ def print_tab_C():
         step_cost = -1, 
         gamma = 0.5
         )
-    model.compute_state_value()
-    model.draw_state_value()
-    model.drew_policy()
+    model.simulate()
+    env.draw_state_value()
+    env.drew_policy()
 
 def print_tab_D():
     env = MakeGrid(
@@ -64,9 +64,9 @@ def print_tab_D():
         step_cost = -1, 
         gamma = 0.5
         )
-    model.compute_state_value()
-    model.draw_state_value()
-    model.drew_policy()
+    model.simulate()
+    env.draw_state_value()
+    env.drew_policy()
 
 def print_tab_E():
     df = pd.read_csv('data/maze_1.csv', header=None)
@@ -84,15 +84,15 @@ def print_tab_E():
         step_cost = -1, 
         gamma = 0.9
         )
-    model.compute_state_value()
-    model.draw_state_value()
-    model.drew_policy()
+    model.simulate()
+    env.draw_state_value()
+    env.drew_policy()
 
 if __name__ == "__main__":
     logger = logging.getLogger("Main")
     logger.info("Running Main.py")
     print_tab_A()
-    # print_tab_B()
-    # print_tab_C()
-    # print_tab_D()
-    # print_tab_E()
+    print_tab_B()
+    print_tab_C()
+    print_tab_D()
+    print_tab_E()
