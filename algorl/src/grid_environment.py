@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from itertools import product
 import matplotlib.pyplot as plt
-import matplotlib.animation as ani
+
 from matplotlib.table import Table
 from typing import List, Dict, Tuple, Optional, Set
 
@@ -19,12 +19,13 @@ from .tool_box import create_directory
 
 class MakeGrid():
     def __init__(
-        self, grid_row:int = 3, grid_col:int = 4, 
+        self, grid_row:int = 3, grid_col:int = 4, plot_name:str = 'grid_world',
         terminal_states:Dict = None, walls:List[Tuple] = None, initial_state:tuple = (0,0),
         images_dir:str = 'images', some_value:float = 0.0,
         ):
         """
         Initializes the grid world
+        - plot_name: str: name of the plot in output
         """
         if terminal_states is None:
             terminal_states = {(0, 3): 1, (1, 3): -10}
@@ -33,6 +34,7 @@ class MakeGrid():
         self.grid_row = grid_row
         self.grid_col = grid_col
         self.grid = np.zeros((self.grid_row, self.grid_col)) + some_value
+        self.plot_name = plot_name
 
         # States set up
         ## A list of all possible states
@@ -73,7 +75,6 @@ class MakeGrid():
         self.grid = np.zeros((self.grid_row, self.grid_col))
         return self.agent_state
 
-
     def render_state_value(self):
         """
         Renders the grid world
@@ -89,7 +90,6 @@ class MakeGrid():
             print("")
         print("--------"*self.grid_col)
 
-
     def _drew_grid(self, tb, width, height, ax):
         for i in range(self.grid_row):
             tb.add_cell(i,-1, width, height, text=i, loc='right', edgecolor='none', facecolor='none',)
@@ -98,7 +98,7 @@ class MakeGrid():
             tb.add_cell(4, i, width, height / 4, text=i, loc='center', edgecolor='none', facecolor='none',)
         ax.add_table(tb)
 
-    def drew_statevalue_and_policy(self, plot_name:str):
+    def drew_statevalue_and_policy(self):
         fig, (st_value, policy) = plt.subplots(1, 2, figsize=(12, 5))
         fig.suptitle('Dynamic Programming')
 
@@ -123,9 +123,9 @@ class MakeGrid():
         self._drew_grid(tb_st_value, width, height, st_value)
         self._drew_grid(tb_policy, width, height, policy)
         
-        plt.savefig(Path(self.images_dir, f'{plot_name}_ST_and_policy.png'), dpi=300)       
+        plt.savefig(Path(self.images_dir, f'{self.plot_name}_ST_and_policy.png'), dpi=300)       
 
-    def draw_state_value(self, plot_name:str):
+    def draw_state_value(self):
         _, ax = plt.subplots()
         ax.set_axis_off()
         tb = Table(ax, bbox=[0, 0, 1, 1])
@@ -135,10 +135,11 @@ class MakeGrid():
             tb = self._state_value_sub_method(tb, i, j, val, width, height)
 
         self._drew_grid(tb, width, height, ax)
-        plt.savefig(Path(self.images_dir, f'{plot_name}_state_values.png'), dpi=300)
+        out_path = Path(self.images_dir, f'{self.plot_name}_state_values.png')
+        plt.savefig(out_path, dpi=300)
+        return out_path
 
-
-    def drew_policy(self, plot_name:str):
+    def drew_policy(self):
         _, ax = plt.subplots()
         ax.set_axis_off()
         tb = Table(ax, bbox=[0, 0, 1, 1])
@@ -149,7 +150,7 @@ class MakeGrid():
             tb = self._state_value_sub_policy(tb, i, j, val, width, height)
 
         self._drew_grid(tb, width, height, ax)
-        plt.savefig(Path(self.images_dir, f'{plot_name}_policy.png'), dpi=300)
+        plt.savefig(Path(self.images_dir, f'{self.plot_name}_policy.png'), dpi=300)
 
     def _state_value_sub_method(self, tb_st_value, i, j, val, width, height):
         if np.isnan(val):

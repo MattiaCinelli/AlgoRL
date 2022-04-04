@@ -2,6 +2,7 @@
 # Standard Libraries
 import sys
 from pathlib import Path
+from traceback import print_tb
 
 # Third party libraries
 import numpy as np
@@ -40,7 +41,7 @@ class DP():
     '''
     def __init__(
         self, env, step_cost:float = -1, gamma:float = 0.5, 
-        noise:float = .0, epsilon:float = 1e-4, plot_name:str = 'grid_world'
+        noise:float = .0, epsilon:float = 1e-4
         ):
         """
         Initializes the grid world
@@ -49,7 +50,6 @@ class DP():
         - gamma: float: discount factor
         - noise: float: probability of taking a action that is not the one chosen
         - epsilon: float: threshold for convergence
-        - plot_name: str: name of the plot in output
         """
         # Agent position and reward set up
         self.step_cost = step_cost
@@ -57,7 +57,6 @@ class DP():
         self.epsilon = epsilon
         self.noise = noise
         self.env = env
-        self.plot_name = plot_name
 
         self.logger = logging.getLogger("DynamicsProgramming")
         self.logger.info("Running DP")
@@ -102,18 +101,8 @@ class DP():
         else:
             return new_grid, False
 
-    
     def compute_state_value(self):
         done = False
         while not done:
             self.env.grid, done = self.get_sweep()
         return self.env.grid
-
-    def draw_state_value(self):
-        self.env.draw_state_value(plot_name=self.plot_name)
-
-    def drew_policy(self):
-        self.env.drew_policy(plot_name=self.plot_name)
-
-    def drew_statevalue_and_policy(self):
-        self.env.drew_statevalue_and_policy(plot_name=self.plot_name)
