@@ -15,7 +15,7 @@ from typing import List, Dict, Tuple, Optional, Set
 # Local imports
 from ..logs import logging
 
-class DP():
+class DP(object):
     '''
     Policy Iteration (using iterative policy evaluation) for estimating pi = pi*
     Page 80 of Sutton and Barto.
@@ -45,6 +45,8 @@ class DP():
         ):
         """
         Initializes the grid world
+        Args:
+        -------------------
         - env: grid_environment: A tabular environment created by MakeGrid class
         - step_cost: float: cost of moving in the environment
         - gamma: float: discount factor
