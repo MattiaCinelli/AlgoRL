@@ -75,7 +75,7 @@ class TemporalDifferenceFunctions(object):
                     tb.add_cell(i, j, width, height, text=np.round(self.env.grid[i, j], 2), loc='center', facecolor='tomato')
             else:
 
-                arrows = "${}$".format(arrow_symbols[df[i, j]])
+                arrows = f"${arrow_symbols[df[i, j]]}$"
                 tb.add_cell(i, j, width, height, text=arrows, loc='center', facecolor='white')
 
         self._drew_grid(tb, width, height, ax)
