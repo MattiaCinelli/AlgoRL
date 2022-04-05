@@ -25,6 +25,7 @@ class TemporalDifferenceFunctions(object):
     """
     def __init__(self) -> None:
         pass
+
     def get_action(self):
         return np.random.choice(self.env.possible_actions) 
 
@@ -82,7 +83,7 @@ class TemporalDifferenceFunctions(object):
         plt.savefig(Path(self.env.images_dir, f'{plot_name}_state_values.png'), dpi=300)
 
 
-class TabuladTD0(TemporalDifferenceFunctions): # Page 120
+class TabuladTD0(TemporalDifferenceFunctions):
     '''
     Monte Carlo Prediction to estimate state-action values
     Page 120 of Sutton and Barto.
@@ -131,7 +132,7 @@ class TabuladTD0(TemporalDifferenceFunctions): # Page 120
         self.env.draw_state_value(plot_name=self.plot_name)
 
 
-class Sarsa(TemporalDifferenceFunctions): # page 130
+class Sarsa(TemporalDifferenceFunctions):
     '''
     Sarsa (on-policy TD control) for estimating Q=q*
     Page 130 of Sutton and Barto.
@@ -202,7 +203,7 @@ class Sarsa(TemporalDifferenceFunctions): # page 130
         self.drew_policy(q_values_df, plot_name=self.plot_name)
 
 
-class QLearning(TemporalDifferenceFunctions): # page 131
+class QLearning(TemporalDifferenceFunctions):
     '''
     Q-learning for estimating pi=pi*
     Page 131 of Sutton and Barto.

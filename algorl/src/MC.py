@@ -22,7 +22,9 @@ class MonteCarloFunctions(object):
     """
     """
     def __init__(self) -> None:
-        pass
+        self.logger = logging.getLogger(__name__)
+        
+
     def get_action(self):
         return np.random.choice(self.env.possible_actions) 
 
@@ -67,7 +69,7 @@ class MCPrediction(MonteCarloFunctions):
     '''
     Monte Carlo Prediction to estimate state-action values
     '''
-    def __init__(self, env, discount_factor:float = 0.9,  num_of_epochs:int = 1_000):
+    def __init__(self, env, discount_factor:float = 0.9, num_of_epochs:int = 1_000):
         """
         Initializes the grid world
         - env: grid_environment: A tabular environment created by Make class
