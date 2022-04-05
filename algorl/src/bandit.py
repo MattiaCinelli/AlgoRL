@@ -18,6 +18,9 @@ import sys
 
 
 class TestAll(object):
+    """
+    Class for the testing of all MAB algorithms
+    """
     def __init__(
         self, time_steps:int=100, arms:int=5, number_of_trials:int=5, images_dir:str='images', 
         q_mean:List[float] = None, q_sd:List[float] = None):

@@ -1,6 +1,7 @@
 # Standard Libraries
 
 # Third party libraries
+import itertools
 import sys
 import pandas as pd
 import numpy as np
@@ -9,8 +10,6 @@ import matplotlib.pyplot as plt
 
 # Local imports
 from ..logs import logging
-from .tool_box import create_directory
-
 
 # 1. Monte Carlo Prediction to estimate state-action values
 # 2. On-policy first-visit Monte Carlo Control algorithm
@@ -63,6 +62,7 @@ class MonteCarloFunctions(object):
             num_of_steps += 1
         return state_action_reward
 
+
 class MCPrediction(MonteCarloFunctions):
     '''
     Monte Carlo Prediction to estimate state-action values
@@ -88,18 +88,18 @@ class MCPrediction(MonteCarloFunctions):
             if epoch % (self.num_of_epochs/10) == 0:
                 print(f'Epoch {epoch}')
 
-        ################
-        ## Create Path
-        ###############
-            # compute random first state and random first action for first state
-            first_state = self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] 
+            ################
+            ## Create Path
+            ###############
+            # compute random first state and random first action for that state
+            first_state = self.env.available_states[np.random.choice(len(self.env.available_states), 1)[0]] 
             first_action = self.get_action()
             # Compute all following states and actions
             state_reward_path = self.state_reward_path(first_state, first_action)
 
-        ################
-        ## Compute return
-        ################
+            ################
+            ## Compute return
+            ################
             G = 0
             first = True
             states_returns = []
@@ -112,9 +112,9 @@ class MCPrediction(MonteCarloFunctions):
                 G = self.discount_factor * G + reward
             states_returns.reverse()
 
-        ################
-        ## Update state value
-        ################
+            ################
+            ## Update state value
+            ################
             for state, G in states_returns:
                 state_value.loc[state_value.states==state, 'times'] += 1
                 state_value.loc[state_value.states==state, 'sum_value'] += G
@@ -127,6 +127,7 @@ class MCPrediction(MonteCarloFunctions):
             self.env.grid[grid_state] =state_value[state_value.states == grid_state].average 
 
         self.env.render_state_value()
+
 
 class FirstVisitMCPredictions(MonteCarloFunctions): # page 92
     '''
@@ -205,6 +206,7 @@ class FirstVisitMCPredictions(MonteCarloFunctions): # page 92
 
         self.env.render_state_value()
 
+
 class MCExploringStarts(MonteCarloFunctions): # page 99
     '''
     Monte Carlo Exploring Starts to estimating pi = pi*
@@ -232,10 +234,9 @@ class MCExploringStarts(MonteCarloFunctions): # page 99
     def compute_state_value(self):
         state_list = []
         action_list = []
-        for state in self.env.available_states:
-            for action in self.env.possible_actions:
-                state_list.append(state)
-                action_list.append(action)
+        for state, action in itertools.product(self.env.available_states, self.env.possible_actions):
+            state_list.append(state)
+            action_list.append(action)
         state_action_value = pd.DataFrame({"states":state_list, 'actions':action_list, 'times':0, 'sum_value':0})
 
         state_action_initialized = {state:self.get_action() for state in self.env.available_states}
@@ -305,11 +306,14 @@ class MCExploringStarts(MonteCarloFunctions): # page 99
         self.env.drew_policy(plot_name=self.plot_name)
         self.env.draw_state_value(plot_name=self.plot_name)
 
-class OnPolicyFirstVisitMCControlEstimatingPi(MonteCarloFunctions): # page 101
+
+class OnPolicyFirstVisitMCControlEstimatingPi(MonteCarloFunctions): #TODO page 101
     pass
 
-class OffPolicyMCPredictionEstimatingQ(MonteCarloFunctions): # page 110
+
+class OffPolicyMCPredictionEstimatingQ(MonteCarloFunctions): #TODO page 110
     pass
 
-class OffPolicyMCControlEstimatingPi(MonteCarloFunctions): # page 111
+
+class OffPolicyMCControlEstimatingPi(MonteCarloFunctions): #TODO page 111
     pass
