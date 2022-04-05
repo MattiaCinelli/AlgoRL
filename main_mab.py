@@ -38,6 +38,12 @@ def greedy_sample_averages_test_with_initials():
     greedy.simulate(time = 500)
     bandits.plot_true_mean_vs_estimation()
 
+def UCB_test():
+    bandits = Bandits(number_of_arms = 5) 
+    ucb = UCB(bandits)
+    ucb.simulate(time = 500)
+    bandits.plot_true_mean_vs_estimation()
+
 def BernoulliThompsonSampling_test():
     bernoulli_bandits = BernoulliBandits(number_of_arms = 5)#, q_mean=[0.4, 0.6, 0.7, 0.8, 0.9])
     # BernTS
@@ -71,8 +77,8 @@ def main(arms=5, number_of_trials=5):
     test_all.test_algo(GaussianThompsonSampling)
     test_all.test_algo(GBA)
     for epsilon in [.1, .5, .9]:
-        test_all.test_algo(Greedy, f"Greedy {epsilon}")
-        test_all.test_algo(UCB, f"UCB {epsilon}")
+        test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Greedy {epsilon}")
+        test_all.test_algo(UCB, UCB_param = epsilon, col_name = f"UCB {epsilon}")
     tot_return, best_actions = test_all.return_dfs()
     test_all.plot_returns(tot_return)
     test_all.plot_action_taken(best_actions)
@@ -86,8 +92,9 @@ def GBA_test():
 if __name__ == "__main__":
     # greedy_sample_averages_test()
     # greedy_step_size_test()
-    greedy_sample_averages_test_with_initials()
-    # main(arms=5, number_of_trials=2)
+    # greedy_sample_averages_test_with_initials()
+    # UCB_test()
+    main(arms=5, number_of_trials=50)
     # BernoulliThompsonSampling_test()
     # GaussianThompsonSampling_test()
     # GBA_test()

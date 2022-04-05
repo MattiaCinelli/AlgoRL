@@ -32,7 +32,9 @@ class TestAll(object):
         self.q_mean = np.random.randn(self.arms) if q_mean is None else q_mean
         self.q_sd = [1] * self.arms if q_sd is None else q_sd
     
-    def test_algo(self, algo, col_name:str=None):
+    def test_algo(self, algo, col_name:str=None, epsilon:float=.1, UCB_param:float=0.1):
+        self.epsilon = epsilon
+        self.UCB_param = UCB_param
         if col_name is None:
             col_name = algo.__name__
         self.logger.info(f"Running {col_name}")
@@ -186,6 +188,7 @@ class MABFunctions(object):
                     self.bandits.bandit_df[action]['action_count']
         elif self.step_size is not None:
             self.logger.debug(f"Step size {self.step_size }")
+            # Q[action] = Q[action] + step_size*(reward - Q[action])
             self.bandits.bandit_df[action]['q_estimation'] =\
                 self.bandits.bandit_df[action]['q_estimation'] +\
                     self.step_size *\
@@ -200,6 +203,7 @@ class MABFunctions(object):
         best_action_count = 0
         best_action_percentage = []
         for num in range(time):
+            self.logger.debug(f"Time: {num}")
             action = self._act(num)
             self.tot_return.append(self._step(action))
             if action == best_action:
@@ -296,7 +300,7 @@ class UCB(MABFunctions):
     """
     def __init__(
         self, bandits:Bandits, 
-        sample_averages:bool=True, step_size:float=None, UCB_param:float=0.1, epsilon:float=.1
+        sample_averages:bool=True, step_size:float=None, UCB_param:float=0.1
         ) -> None:
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initialize UCB")
@@ -304,16 +308,17 @@ class UCB(MABFunctions):
         self.UCB_param = UCB_param
         self.sample_averages = sample_averages
         self.step_size = step_size
-        self.epsilon = epsilon
         self.tot_return = []
 
-    def _act(self, num:int) -> pd.DataFrame:
-        if np.random.rand() < self.epsilon:
-            return np.random.choice(self.bandits.bandit_name)
-
+    def _act(self, num:int) -> pd.DataFrame: 
+        # It does a first exploration of all options before using UCB 
+        if num < len(self.bandits.bandit_name):
+            return self.bandits.bandit_name[num]
+        
+        # action = np.argmax(Q + c * np.sqrt(np.log(e)/N))
         UCB_estimation = self.bandits.bandit_df.loc['q_estimation', :] + \
             self.UCB_param * np.sqrt(
-                np.log(num + 1) / (self.bandits.bandit_df.loc['action_count', :] + 1e-5))
+                np.log(num + 1) / (self.bandits.bandit_df.loc['action_count', :]))
         
         return self.bandits.bandit_df.columns[np.random.choice(np.where(UCB_estimation == np.max(UCB_estimation))[0])]
 
@@ -327,32 +332,37 @@ class GBA(MABFunctions):
     - Grokking Deep Reinforcement Learning by Miguel Morales. Page 118
     """
     def __init__(
-        self, bandits:Bandits, epsilon:float=.1, 
-        sample_averages:bool=False, step_size:float=None
+        self, bandits:Bandits, decay_ratio:float=0.04,
+        sample_averages:bool=True, step_size:float=None, init_temp=float('inf'), min_temp=0.0
         ) -> None:
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initialize GBA/SoftMax")
         self.bandits = bandits
-        self.epsilon = epsilon
         self.sample_averages = sample_averages
         self.step_size = step_size
         self.tot_return = []
+        self.decay_ratio = decay_ratio
+        self.init_temp = min(init_temp, sys.float_info.max)
+        self.min_temp = max(min_temp, np.nextafter(np.float32(0), np.float32(1)))
+        self.logger.debug(f'Lin SoftMax {init_temp}, {min_temp}, {decay_ratio}')
 
-    def _act(self, num:int, decay_ratio:float=0.04) -> str:
+    def _act(self, num:int) -> str:
         """
         This function returns the action to be taken based on the epsilon greedy policy.
         """
-        decay_episodes = num+1 * decay_ratio
-        temp = 1- np.exp(1)/decay_episodes
-        temp *= 1000 - 0.01 
-        temp += 0.01 
-        temp = np.clip(temp, 0.01, 1000)
-        q = np.random.normal(self.bandits.bandit_df.loc['q_estimation', :], self.bandits.bandit_df.loc['estimated_sd', :])
-        scaled_q = q/temp
-        norm_q = scaled_q - np.max(scaled_q)
-        exp_q = np.exp(norm_q)
-        probs = exp_q/np.sum(exp_q)
-        assert np.isclose(np.sum(probs), 1.0)
+        decay_episodes = num+1 * self.decay_ratio
+        temp = 1 - np.exp(1) / decay_episodes
+
+        temp *= self.init_temp - self.min_temp
+        temp += self.min_temp
+        temp = np.clip(temp, self.min_temp, self.init_temp)
+
+        Q = np.random.normal(self.bandits.bandit_df.loc['q_estimation', :], self.bandits.bandit_df.loc['estimated_sd', :])
+        scaled_Q = Q / temp
+        norm_Q = scaled_Q - np.max(scaled_Q)
+        exp_Q = np.exp(norm_Q)
+        probs = exp_Q / np.sum(exp_Q)
+
         return np.random.choice(self.bandits.bandit_name, p=probs)
 
 
@@ -424,9 +434,11 @@ class BernoulliThompsonSampling(MABFunctions):
         self.bandits.bandit_df[action]['action_count'] += 1
         self.bandits.bandit_df[action]['alpha'] += reward
         self.bandits.bandit_df[action]['beta'] += 1-reward
+
+        assert np.isclose(np.sum(self.bandits.bandit_df.loc['target', :]), 1.0), "The sum of all probabilities is not 1.0"
         return reward
 
-    def _act(self, num:int) -> str:        
+    def _act(self, _:int) -> str:        
         if self.bandit_type == 'BernTS':
             # Compute Bernoulli distributions
             self.bandits.bandit_df.loc['theta_hat', :] = \
@@ -493,15 +505,12 @@ class GaussianThompsonSampling(MABFunctions):
                  1 / np.array(self.estimated_sd)**2 +\
                  self.bandits.bandit_df.loc['action_count', :] / self.bandits.bandit_df.loc['true_sd', :]**2)**-1)
        
-        # sys.exit()
         self.bandits.bandit_df.loc['q_estimation', :] =\
              (self.bandits.bandit_df.loc['estimated_sd', :]**2)*((np.array(self.q_estimation)/ np.array(self.estimated_sd)**2) +\
                  (self.bandits.bandit_df.loc['reward', :]/self.bandits.bandit_df.loc['true_sd', :]**2))
-        # ic(self.bandits.bandit_df)
-        # sys.exit()
         return reward
 
-    def _act(self, num:int) -> str:        
+    def _act(self, _:int) -> str:        
         # Compute value from estimated distribution 
         self.bandits.bandit_df.loc['theta_hat', :] = \
             np.random.normal(self.bandits.bandit_df.loc['q_estimation', :], self.bandits.bandit_df.loc['estimated_sd', :])
