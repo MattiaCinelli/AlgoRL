@@ -1,12 +1,10 @@
 """Simple script to run snips of code"""
 # Standard Libraries
-from email import policy
 import sys
 from pathlib import Path
 
 # Third party libraries
 import numpy as np
-import pandas as pd
 from itertools import product
 import matplotlib.pyplot as plt
 

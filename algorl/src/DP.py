@@ -2,14 +2,10 @@
 # Standard Libraries
 import sys
 from pathlib import Path
-from traceback import print_tb
 
 # Third party libraries
 import numpy as np
 import pandas as pd
-from itertools import product
-import matplotlib.pyplot as plt
-from matplotlib.table import Table
 from typing import List, Dict, Tuple, Optional, Set
 
 # Local imports
