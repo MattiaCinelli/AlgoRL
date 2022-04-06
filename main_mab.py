@@ -11,10 +11,37 @@ from algorl.src.bandit import *
 
 logger = logging.getLogger(__name__)
 
-def GreedyAlgo():
+def greedy_sample_averages_test():
+    '''
+    Test the greedy algorithm with sample_averages
+    '''
     bandits = Bandits(number_of_arms = 5) 
     greedy = Greedy(bandits)
     greedy.simulate(time = 500)
+    bandits.plot_true_mean_vs_estimation()
+
+def greedy_step_size_test():
+    '''
+    Test the greedy algorithm with sample_averages
+    '''
+    bandits = Bandits(number_of_arms = 5) 
+    greedy = Greedy(bandits, sample_averages=False, step_size=0.1)
+    greedy.simulate(time = 500)
+    bandits.plot_true_mean_vs_estimation()
+
+def greedy_sample_averages_test_with_initials():
+    '''
+    Test the greedy algorithm with sample_averages
+    '''
+    bandits = Bandits(number_of_arms = 5, initial=5) 
+    greedy = Greedy(bandits, )
+    greedy.simulate(time = 500)
+    bandits.plot_true_mean_vs_estimation()
+
+def UCB_test():
+    bandits = Bandits(number_of_arms = 5) 
+    ucb = UCB(bandits)
+    ucb.simulate(time = 500)
     bandits.plot_true_mean_vs_estimation()
 
 def BernoulliThompsonSampling_test():
@@ -48,15 +75,26 @@ def main(arms=5, number_of_trials=5):
     test_all.test_algo(OnlyExploration)
     test_all.test_algo(OnlyExploitation)
     test_all.test_algo(GaussianThompsonSampling)
+    test_all.test_algo(GBA)
     for epsilon in [.1, .5, .9]:
-        test_all.test_algo(Greedy, f"Greedy {epsilon}")
-        test_all.test_algo(UCB, f"UCB {epsilon}")
+        test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Greedy {epsilon}")
+        test_all.test_algo(UCB, UCB_param = epsilon, col_name = f"UCB {epsilon}")
     tot_return, best_actions = test_all.return_dfs()
     test_all.plot_returns(tot_return)
     test_all.plot_action_taken(best_actions)
 
-if __name__ == "__main__":
-    main(arms=5, number_of_trials=100)
-    BernoulliThompsonSampling_test()
-    GaussianThompsonSampling_test()
+def GBA_test():
+    bandits = Bandits(number_of_arms = 5) 
+    gba = GBA(bandits)
+    gba.simulate(time = 500)
+    bandits.plot_true_mean_vs_estimation()
 
+if __name__ == "__main__":
+    # greedy_sample_averages_test()
+    # greedy_step_size_test()
+    # greedy_sample_averages_test_with_initials()
+    # UCB_test()
+    main(arms=5, number_of_trials=50)
+    # BernoulliThompsonSampling_test()
+    # GaussianThompsonSampling_test()
+    # GBA_test()

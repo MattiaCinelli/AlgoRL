@@ -14,9 +14,9 @@ def print_tab_A():
         terminal_states = {(0, 3): 1, (1, 3): -10}
         )
     env.render_state_value()
-    # mc = MCPrediction(env)
+    mc = MCPrediction(env)
     # mc = FirstVisitMCPredictions(env)
-    mc = MCExploringStarts(env)
+    # mc = MCExploringStarts(env)
     mc.compute_state_value()
 
 if __name__ == "__main__":

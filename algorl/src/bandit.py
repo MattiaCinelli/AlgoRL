@@ -6,7 +6,7 @@ from pathlib import Path
 import string
 import pandas as pd
 import numpy as np
-from typing import List
+from typing import List, Tuple
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm 
 from icecream import ic
@@ -15,12 +15,17 @@ from icecream import ic
 from ..logs import logging
 from .tool_box import create_directory
 import sys
-logger = logging.getLogger(__name__)
 
 
 class TestAll(object):
-    logger.info("Running TestAll MAB")
-    def __init__(self, time_steps:int=100, arms:int=5, number_of_trials:int=5, images_dir:str='images', q_mean:List[float] = None, q_sd:List[float] = None):
+    """
+    Class for the testing of all MAB algorithms
+    """
+    def __init__(
+        self, time_steps:int=100, arms:int=5, number_of_trials:int=5, images_dir:str='images', 
+        q_mean:List[float] = None, q_sd:List[float] = None):
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Running TestAll MAB")
         self.df_return = pd.DataFrame()
         self.df_action = pd.DataFrame()
         self.time_steps = time_steps
@@ -30,13 +35,15 @@ class TestAll(object):
         self.q_mean = np.random.randn(self.arms) if q_mean is None else q_mean
         self.q_sd = [1] * self.arms if q_sd is None else q_sd
     
-    def test_algo(self, algo, col_name:str=None):
+    def test_algo(self, algo, col_name:str=None, epsilon:float=.1, UCB_param:float=0.1):
+        self.epsilon = epsilon
+        self.UCB_param = UCB_param
         if col_name is None:
             col_name = algo.__name__
-        logger.info(f"Running {col_name}")
+        self.logger.info(f"Running {col_name}")
         rewards, best_actions = [], []
         for _ in range(self.number_of_trials):
-            logger.info("\ttest: {}".format(_))
+            self.logger.info("\ttest: {}".format(_))
             #1 New bandits
             bandits = Bandits(number_of_arms = self.arms)
             #2 Simulate
@@ -71,13 +78,17 @@ class TestAll(object):
 
 
 class Bandits():
-    logger.info("Initialize bandits")
+    '''
+    Bandits environment
+    '''
     def __init__(
         self, 
         number_of_arms:int = 10,
         q_mean:List[float] = None,
         q_sd:List[float] = None, initial:float=.0,
         bandit_name:List[str]=None, images_dir:str = 'images') -> None:
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialize Bandits")
 
         self.number_of_arms = number_of_arms
         self.bandit_name = list(string.ascii_uppercase[:self.number_of_arms]) if bandit_name is None else bandit_name
@@ -135,11 +146,12 @@ class Bandits():
 
 
 class BernoulliBandits(Bandits):
-    logger.info("Initialize Bernoulli Bandits")
     def __init__(
         self, number_of_arms: int = 10, q_mean: List[float] = None, q_sd: List[float] = None, 
         initial: float = 1, bandit_name: List[str] = None, images_dir: str = 'images') -> None:
         ''''''
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialize Bernoulli Bandits")
         q_mean = np.linspace(0.1, 0.9, num=number_of_arms) if q_mean is None else q_mean
         super().__init__(number_of_arms, q_mean, q_sd, initial, bandit_name, images_dir)
         self.bandit_df.index = [
@@ -158,28 +170,35 @@ class MABFunctions(object):
     def __init__(self) -> None:
         pass
 
-    def _step(self, action) -> None:
+    def _step(self, action) -> float:
         """
-        This function updates the action value estimates.
+        This function returns the reward for the action taken
         """
+        assert action in self.bandits.bandit_name, f"{action} is not a valid action"
+
         reward = np.random.normal(
             self.bandits.bandit_df[action]['target'], 
-            self.bandits.bandit_df[action]['estimated_sd'], size=1)[0]
+            self.bandits.bandit_df[action]['true_sd'], size=1)[0]
+        self.logger.debug(f"Action {action} reward: {reward}")
         self.bandits.bandit_df[action]['action_count'] += 1
 
         if self.sample_averages:
+            self.logger.debug("Sample averages")
+            # Q[action] = Q[action] + (reward - Q[action])/N[action]
             self.bandits.bandit_df[action]['q_estimation'] =\
                 self.bandits.bandit_df[action]['q_estimation']+\
                 (reward - self.bandits.bandit_df[action]['q_estimation'])/\
                     self.bandits.bandit_df[action]['action_count']
-        else:
+        elif self.step_size is not None:
+            self.logger.debug(f"Step size {self.step_size }")
+            # Q[action] = Q[action] + step_size*(reward - Q[action])
             self.bandits.bandit_df[action]['q_estimation'] =\
                 self.bandits.bandit_df[action]['q_estimation'] +\
                     self.step_size *\
                          (reward - self.bandits.bandit_df[action]['q_estimation'])
         return reward
 
-    def simulate(self, time:int)-> None:
+    def simulate(self, time:int) -> Tuple[List[float], List[float]]:
         """
         This function simulates the action taking process.
         """
@@ -187,6 +206,7 @@ class MABFunctions(object):
         best_action_count = 0
         best_action_percentage = []
         for num in range(time):
+            self.logger.debug(f"Time: {num}")
             action = self._act(num)
             self.tot_return.append(self._step(action))
             if action == best_action:
@@ -197,14 +217,15 @@ class MABFunctions(object):
 
 
 class OnlyExploration(MABFunctions):
-    logger.info("Initialize OnlyExploration")
     def __init__(
         self, bandits:Bandits, sample_averages:bool=True, 
-        step_size:float=0.1) -> None:
+        step_size:float=None) -> None:
         self.bandits = bandits
         self.tot_return = []
         self.sample_averages = sample_averages
         self.step_size = step_size
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialize OnlyExploration")
 
     def _act(self, _:int) -> str:
         """
@@ -214,10 +235,11 @@ class OnlyExploration(MABFunctions):
 
 
 class OnlyExploitation(MABFunctions):
-    logger.info("Initialize OnlyExploitation")
     def __init__(
         self, bandits:Bandits, sample_averages:bool=True, 
-        step_size:float=0.1) -> None:
+        step_size:float=None) -> None:
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialize OnlyExploitation")
         self.bandits = bandits
         self.tot_return = []
         self.sample_averages = sample_averages
@@ -225,7 +247,7 @@ class OnlyExploitation(MABFunctions):
 
     def _act(self, _:int) -> str:
         """
-        This function returns a random action 
+        This function returns the known a priori best action
         """
         return self.bandits.return_bandit_df().loc['target', :].idxmax()
 
@@ -233,8 +255,10 @@ class OnlyExploitation(MABFunctions):
 class Greedy(MABFunctions):
     """
     This code allows pure, epsilon-greedy with action value or step size with or without optimistic initial values. 
-    Page 32 of Sutton and Barto.
-
+    
+    Reference:
+    --------------------
+    - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 32.
     A simple bandits algorithm
     Initialize, for a = 1 to k: 
     Q(a) <- 0
@@ -246,11 +270,13 @@ class Greedy(MABFunctions):
         N(A) N(A)+1
         Q(A) Q(A)+ 1/N(A) * (R - Q(A))
     """
-    logger.info("Initialize Greedy")
+    
     def __init__(
         self, bandits:Bandits, epsilon:float=.1, 
-        sample_averages:bool=True, step_size:float=0.1
+        sample_averages:bool=True, step_size:float=None
         ) -> None:
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialize Greedy")
         self.bandits = bandits
         self.epsilon = epsilon
         self.sample_averages = sample_averages
@@ -271,83 +297,84 @@ class Greedy(MABFunctions):
 class UCB(MABFunctions):
     """
     Upper Confidence Bound (UCB) algorithm.
-    Page 35 of Sutton and Barto.
+    Reference:
+    --------------------
+    - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 35
     """
-    logger.info("Initialize UCB")
     def __init__(
         self, bandits:Bandits, 
-        sample_averages:bool=True, step_size:float=0.1, UCB_param:float=0.1, epsilon:float=.1
+        sample_averages:bool=True, step_size:float=None, UCB_param:float=0.1
         ) -> None:
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialize UCB")
         self.bandits = bandits
         self.UCB_param = UCB_param
         self.sample_averages = sample_averages
         self.step_size = step_size
-        self.epsilon = epsilon
         self.tot_return = []
 
-    def _act(self, num:int) -> pd.DataFrame:
-        if np.random.rand() < self.epsilon:
-            return np.random.choice(self.bandits.bandit_name)
-
+    def _act(self, num:int) -> pd.DataFrame: 
+        # It does a first exploration of all options before using UCB 
+        if num < len(self.bandits.bandit_name):
+            return self.bandits.bandit_name[num]
+        
+        # action = np.argmax(Q + c * np.sqrt(np.log(e)/N))
         UCB_estimation = self.bandits.bandit_df.loc['q_estimation', :] + \
             self.UCB_param * np.sqrt(
-                np.log(num + 1) / (self.bandits.bandit_df.loc['action_count', :] + 1e-5))
+                np.log(num + 1) / (self.bandits.bandit_df.loc['action_count', :]))
         
         return self.bandits.bandit_df.columns[np.random.choice(np.where(UCB_estimation == np.max(UCB_estimation))[0])]
 
 
-class GBA(): #TODO
+class GBA(MABFunctions): 
     """
     Gradient bandits Algorithm
-    Page 37 of Sutton and Barto.
+    Reference:
+    --------------------
+    - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 37
+    - Grokking Deep Reinforcement Learning by Miguel Morales. Page 118
     """
-    logger.info("Initialize GBA")
     def __init__(
-        self, bandits:Bandits, 
-        sample_averages:bool=True, step_size:float=0.1, gradient_baseline=True, epsilon:float=.1
+        self, bandits:Bandits, decay_ratio:float=0.04,
+        sample_averages:bool=True, step_size:float=None, init_temp=float('inf'), min_temp=0.0
         ) -> None:
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialize GBA/SoftMax")
         self.bandits = bandits
         self.sample_averages = sample_averages
         self.step_size = step_size
-        self.gradient_baseline = gradient_baseline
-        self.epsilon = epsilon
-        self.average_reward = 0
+        self.tot_return = []
+        self.decay_ratio = decay_ratio
+        self.init_temp = min(init_temp, sys.float_info.max)
+        self.min_temp = max(min_temp, np.nextafter(np.float32(0), np.float32(1)))
+        self.logger.debug(f'Lin SoftMax {init_temp}, {min_temp}, {decay_ratio}')
 
-    def _act(self):
-        exp_est = np.exp(self.bandits.bandit_df.loc['q_estimation', :])
-        self.action_prob = exp_est / np.sum(exp_est)
-
-        if np.random.rand() < self.epsilon:
-            return np.random.choice(self.bandits.bandit_name)
-
-        return np.random.choice(self.bandits.bandit_df.columns, p=self.action_prob)
-
-    def _step(self, action, num) -> None:
+    def _act(self, num:int) -> str:
         """
-        This function updates the action value estimates.
+        This function returns the action to be taken based on the epsilon greedy policy.
         """
-        reward = np.random.normal(
-            self.bandits.bandit_df[action]['target'], 
-            self.bandits.bandit_df[action]['estimated_sd'], size=1)[0]
-        self.bandits.bandit_df[action]['action_count'] += 1
-        self.average_reward =+ (reward - self.average_reward)/(num+1)
-        
-        one_hot = np.zeros(self.bandits.bandit_df.shape[1])
-        one_hot[string.ascii_uppercase.index(action)] = 1
+        decay_episodes = num+1 * self.decay_ratio
+        temp = 1 - np.exp(1) / decay_episodes
 
-        
-        baseline = self.average_reward if self.gradient_baseline else 0
+        temp *= self.init_temp - self.min_temp
+        temp += self.min_temp
+        temp = np.clip(temp, self.min_temp, self.init_temp)
 
-        self.bandits.bandit_df.loc['q_estimation', :] =\
-            [(self.bandits.bandit_df[action]['q_estimation']+ self.step_size * (reward - baseline))*x 
-            for x in one_hot - self.action_prob]
+        Q = np.random.normal(self.bandits.bandit_df.loc['q_estimation', :], self.bandits.bandit_df.loc['estimated_sd', :])
+        scaled_Q = Q / temp
+        norm_Q = scaled_Q - np.max(scaled_Q)
+        exp_Q = np.exp(norm_Q)
+        probs = exp_Q / np.sum(exp_Q)
+
+        return np.random.choice(self.bandits.bandit_name, p=probs)
 
 
 class BernoulliThompsonSampling(MABFunctions):
     """
     The Thompson sampling strategy is a sample- based probability matching strategy that allows us to use 
+    
     Bayesian techniques to balance the exploration and exploitation trade-off.
-    A simple way to implement this strategy is to keep track of each Q-value as a Gaussian distribution. Page 122, Grokking.
+    A simple way to implement this strategy is to keep track of each Q-value as a Gaussian distribution. 
     P( 𝛍 | data ) = P(data | 𝛍) P(𝛍) / P(data)
               ∝ P(data | 𝛍) P(𝛍)
     posterior ∝ likelihood x prior
@@ -382,11 +409,16 @@ class BernoulliThompsonSampling(MABFunctions):
         θk ←αk/(αk +βk)
     end for
 
+    Reference:
+    --------------------
+    - Grokking Deep Reinforcement Learning by Miguel Morales. Page 122, Grokking.
+    - A tutorial on Thomsp sampling. Page 15
     """
-    logger.info("Initialize BernoulliThompsonSampling")
     def __init__(
         self, bandits:Bandits, alpha = 1, beta = 1, bandit_type:str='BernTS',
         ) -> None:
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialize BernoulliThompsonSampling")
         self.bandits = bandits
         self.alpha = alpha
         self.beta = beta
@@ -397,28 +429,30 @@ class BernoulliThompsonSampling(MABFunctions):
         """
         This function updates the action value estimates.
         """
-        logger.debug(action)
+        self.logger.debug(action)
         # Compute Bernoulli distribution
         reward = np.random.binomial(1, self.bandits.bandit_df[action]['target'], size=1)[0]
-        logger.debug(reward)
+        self.logger.debug(reward)
 
         self.bandits.bandit_df[action]['action_count'] += 1
         self.bandits.bandit_df[action]['alpha'] += reward
         self.bandits.bandit_df[action]['beta'] += 1-reward
+
+        assert np.isclose(np.sum(self.bandits.bandit_df.loc['target', :]), 1.0), "The sum of all probabilities is not 1.0"
         return reward
 
-    def _act(self, num:int) -> str:        
+    def _act(self, _:int) -> str:        
         if self.bandit_type == 'BernTS':
             # Compute Bernoulli distributions
             self.bandits.bandit_df.loc['theta_hat', :] = \
                 np.random.beta(a=self.bandits.bandit_df.loc['alpha', :], b=self.bandits.bandit_df.loc['beta', :])
-            logger.debug(self.bandits.bandit_df.loc['theta_hat', :])
+            self.logger.debug(self.bandits.bandit_df.loc['theta_hat', :])
 
         elif self.bandit_type == 'BernGreedy':
             # Compute Bernoulli distributions
             self.bandits.bandit_df.loc['theta_hat', :] = \
                 self.bandits.bandit_df.loc['alpha', :]/(self.bandits.bandit_df.loc['alpha', :]+self.bandits.bandit_df.loc['beta', :])
-            logger.debug(self.bandits.bandit_df.loc['theta_hat', :])
+            self.logger.debug(self.bandits.bandit_df.loc['theta_hat', :])
         else:
             raise ValueError(f'bandits type {self.bandit_type} not supported')
 
@@ -439,9 +473,10 @@ class GaussianThompsonSampling(MABFunctions):
     Example 4.1, pag 21
     A tutorial on Thompson sampling, Russo 
     '''
-    logger.info("Initialize GaussianThompsonSampling")
     def __init__(
         self, bandits:Bandits, q_estimation:float=0, estimated_sd:float=100) -> None:
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initialize GaussianThompsonSampling")
         self.bandits = bandits
         self.tot_return = []
         self.bandits.bandit_df.loc['theta_hat', :] = 0
@@ -456,13 +491,13 @@ class GaussianThompsonSampling(MABFunctions):
         """
         This function updates the action value estimates.
         """
-        logger.debug(action)
+        self.logger.debug(action)
         
         # Compute Bernoulli distribution
         reward = np.random.normal(
             self.bandits.bandit_df[action]['target'], 
             self.bandits.bandit_df[action]['true_sd'], size=1)[0]
-        logger.debug(reward)
+        self.logger.debug(reward)
 
         self.bandits.bandit_df[action]['reward'] += reward
         self.bandits.bandit_df[action]['action_count'] += 1
@@ -473,19 +508,16 @@ class GaussianThompsonSampling(MABFunctions):
                  1 / np.array(self.estimated_sd)**2 +\
                  self.bandits.bandit_df.loc['action_count', :] / self.bandits.bandit_df.loc['true_sd', :]**2)**-1)
        
-        # sys.exit()
         self.bandits.bandit_df.loc['q_estimation', :] =\
              (self.bandits.bandit_df.loc['estimated_sd', :]**2)*((np.array(self.q_estimation)/ np.array(self.estimated_sd)**2) +\
                  (self.bandits.bandit_df.loc['reward', :]/self.bandits.bandit_df.loc['true_sd', :]**2))
-        # ic(self.bandits.bandit_df)
-        # sys.exit()
         return reward
 
-    def _act(self, num:int) -> str:        
+    def _act(self, _:int) -> str:        
         # Compute value from estimated distribution 
         self.bandits.bandit_df.loc['theta_hat', :] = \
             np.random.normal(self.bandits.bandit_df.loc['q_estimation', :], self.bandits.bandit_df.loc['estimated_sd', :])
-        logger.debug(self.bandits.bandit_df.loc['theta_hat', :])
+        self.logger.debug(self.bandits.bandit_df.loc['theta_hat', :])
 
         # select action
         return( np.random.choice(
