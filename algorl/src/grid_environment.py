@@ -5,6 +5,7 @@ from pathlib import Path
 
 # Third party libraries
 import numpy as np
+import pandas as pd
 from itertools import product
 import matplotlib.pyplot as plt
 
@@ -33,6 +34,8 @@ class MakeGrid():
         - initial_state: tuple: initial state, where the agent starts
         - images_dir: str: path to the directory where the images will be saved
         - some_value: float: some value to initialize the grid
+
+        
         """
         if terminal_states is None:
             terminal_states = {(0, 3): 1, (1, 3): -10}
@@ -113,9 +116,9 @@ class MakeGrid():
                 text=i, loc='center', edgecolor='none', facecolor='none',)
         ax.add_table(tb)
 
-    def drew_statevalue_and_policy(self):
+    def drew_statevalue_and_policy(self, plot_title = 'Dynamic_Programming'):
         fig, (st_value, policy) = plt.subplots(1, 2, figsize=(12, 5))
-        fig.suptitle('Dynamic Programming')
+        fig.suptitle(f'{plot_title}')
 
         st_value.set_title('State values')
         policy.set_title('Best Policy')
@@ -136,7 +139,7 @@ class MakeGrid():
         self._drew_grid(tb_st_value, st_value)
         self._drew_grid(tb_policy, policy)
         
-        plt.savefig(Path(self.images_dir, f'{self.plot_name}_ST_and_policy.png'), dpi=300)       
+        plt.savefig(Path(self.images_dir, f'{plot_title}_{self.plot_name}_ST_and_policy.png'), dpi=300)       
 
     def draw_state_value(self):
         _, ax = plt.subplots()
@@ -213,3 +216,67 @@ class MakeGrid():
     def is_terminal_state(self, state):
         """ Returns true if the state is a terminal state"""
         return state in self.terminal_states_list
+
+
+
+
+#############
+# Examples 
+#############
+from abc import ABC, abstractmethod
+class GridWorldExamples(ABC):
+    '''Operations'''
+    @abstractmethod
+    def gridword():
+        pass
+
+class RussellNorvigGridworld(GridWorldExamples):
+    '''Russell & Norvig Gridworld environment'''
+    def gridword():
+        return MakeGrid(
+            walls = [(1, 1)], 
+            terminal_states = {(0, 3): 1, (1, 3): -10}, 
+            plot_name = 'RussellNorvig'
+            )
+
+
+class gridwordB(GridWorldExamples):
+    def gridword():
+        return MakeGrid(
+            grid_row = 5, 
+            grid_col = 5, 
+            walls = [(1, 1),(1, 3), (3, 1), (3, 3)], 
+            plot_name='table_B',
+            terminal_states = {(4, 4): 1, (0, 4): -10}
+            )
+
+class gridwordC(GridWorldExamples):
+    def gridword():
+        return MakeGrid(
+            grid_row = 4, 
+            grid_col = 4, plot_name='table_C',
+            terminal_states = {(0, 0): 0, (3, 3): 0}, 
+            )
+
+class gridwordD(GridWorldExamples):
+    '''Gridworld D'''
+    def gridword():
+        return MakeGrid(
+            grid_row = 7, 
+            grid_col = 7, plot_name='table_D',
+            walls = [(1, 1),(1, 3), (3, 1), (3, 3)], 
+            terminal_states = {(4, 4): 1, (6, 6): 100}, 
+            )
+
+class gridwordE(GridWorldExamples):
+    def gridword():
+        df = pd.read_csv('data/maze_1.csv', header=None)
+        rows, cols = np.where(df==0)
+        return MakeGrid(
+            grid_row=df.shape[0],
+            grid_col=df.shape[1],
+            plot_name='table_E',
+            walls=list(zip(rows, cols)),
+            terminal_states={(5, 4): 10, (0, 9): -10},
+        )
+

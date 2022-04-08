@@ -168,7 +168,7 @@ class MABFunctions(object):
     Parent class that contains functions that are used in multiple algorithms
     '''
     def __init__(self) -> None:
-        pass
+        self.logger = logging.getLogger(__name__)
 
     def _step(self, action) -> float:
         """
@@ -220,11 +220,11 @@ class OnlyExploration(MABFunctions):
     def __init__(
         self, bandits:Bandits, sample_averages:bool=True, 
         step_size:float=None) -> None:
+        MABFunctions.__init__(self)
         self.bandits = bandits
         self.tot_return = []
         self.sample_averages = sample_averages
         self.step_size = step_size
-        self.logger = logging.getLogger(__name__)
         self.logger.info("Initialize OnlyExploration")
 
     def _act(self, _:int) -> str:
@@ -238,7 +238,7 @@ class OnlyExploitation(MABFunctions):
     def __init__(
         self, bandits:Bandits, sample_averages:bool=True, 
         step_size:float=None) -> None:
-        self.logger = logging.getLogger(__name__)
+        MABFunctions.__init__(self)
         self.logger.info("Initialize OnlyExploitation")
         self.bandits = bandits
         self.tot_return = []
@@ -275,7 +275,7 @@ class Greedy(MABFunctions):
         self, bandits:Bandits, epsilon:float=.1, 
         sample_averages:bool=True, step_size:float=None
         ) -> None:
-        self.logger = logging.getLogger(__name__)
+        MABFunctions.__init__(self)
         self.logger.info("Initialize Greedy")
         self.bandits = bandits
         self.epsilon = epsilon
@@ -305,7 +305,7 @@ class UCB(MABFunctions):
         self, bandits:Bandits, 
         sample_averages:bool=True, step_size:float=None, UCB_param:float=0.1
         ) -> None:
-        self.logger = logging.getLogger(__name__)
+        MABFunctions.__init__(self)
         self.logger.info("Initialize UCB")
         self.bandits = bandits
         self.UCB_param = UCB_param
@@ -338,7 +338,7 @@ class GBA(MABFunctions):
         self, bandits:Bandits, decay_ratio:float=0.04,
         sample_averages:bool=True, step_size:float=None, init_temp=float('inf'), min_temp=0.0
         ) -> None:
-        self.logger = logging.getLogger(__name__)
+        MABFunctions.__init__(self)
         self.logger.info("Initialize GBA/SoftMax")
         self.bandits = bandits
         self.sample_averages = sample_averages
@@ -412,12 +412,12 @@ class BernoulliThompsonSampling(MABFunctions):
     Reference:
     --------------------
     - Grokking Deep Reinforcement Learning by Miguel Morales. Page 122, Grokking.
-    - A tutorial on Thomsp sampling. Page 15
+    - A tutorial on Thompson sampling. Page 15
     """
     def __init__(
         self, bandits:Bandits, alpha = 1, beta = 1, bandit_type:str='BernTS',
         ) -> None:
-        self.logger = logging.getLogger(__name__)
+        MABFunctions.__init__(self)
         self.logger.info("Initialize BernoulliThompsonSampling")
         self.bandits = bandits
         self.alpha = alpha
@@ -464,6 +464,8 @@ class BernoulliThompsonSampling(MABFunctions):
 
 class GaussianThompsonSampling(MABFunctions):
     '''
+    Reference:
+    --------------------
     https://en.wikipedia.org/wiki/Conjugate_prior
     Normal with known variance σ2
 
@@ -475,7 +477,7 @@ class GaussianThompsonSampling(MABFunctions):
     '''
     def __init__(
         self, bandits:Bandits, q_estimation:float=0, estimated_sd:float=100) -> None:
-        self.logger = logging.getLogger(__name__)
+        MABFunctions.__init__(self)
         self.logger.info("Initialize GaussianThompsonSampling")
         self.bandits = bandits
         self.tot_return = []
