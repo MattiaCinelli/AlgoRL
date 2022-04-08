@@ -68,12 +68,14 @@ class TemporalDifferenceFunctions(object):
 
     def sarsa_formula(self, q_values_df, state, action, reward, next_state, next_action):
         '''Q(S, A) <- Q(S, A) + alpha[R + gamma*Q(S', A') - Q(S, A)]'''
+        # Q[state][action] = Q[state][action] + alpha * reward + gamma * Q[next_state][next_action] - Q[state][action]
         q_values_df.at[state, action] =\
             q_values_df.at[state, action] + self.alfa *\
-                (reward + self.gamma * q_values_df.at[next_state, next_action] - q_values_df.at[state, action])
+                (reward + self.gamma * q_values_df.at[next_state, next_action] \
+                    - q_values_df.at[state, action])
         return q_values_df
 
-    def q_learning_formula(self, q_values_df, state, action, reward, next_state, next_action):
+    def q_learning_formula(self, q_values_df, state, action, reward, next_state, _):
         '''Q(S, A) <- Q(S, A) + alpha[R + gamma * max[Q(S', a)] - Q(S, A)]'''
         max_value = max(q_values_df.at[next_state, x] for x in self.env.possible_actions)
         q_values_df.at[state, action] =\
@@ -96,7 +98,7 @@ class TemporalDifferenceFunctions(object):
         for epoch in range(self.num_of_epochs):
             if epoch % (self.num_of_epochs/10) == 0:
                 self.logger.info(f'\tEpoch {epoch}')
-            
+
             # Get first state and action for the episode
             state = self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] if None else self.starting_state
             action = state_action_pairs[state]
@@ -174,6 +176,7 @@ class TabuladTD0(TemporalDifferenceFunctions):
                 state = next_state
                 done = self.env.is_terminal_state(state)
 
+
 class Sarsa(TemporalDifferenceFunctions):
     '''
     Sarsa (on-policy TD control) for estimating Q=q*
@@ -213,9 +216,9 @@ class Sarsa(TemporalDifferenceFunctions):
         self.num_episodes = num_episodes
         self.logger.info('SARSA initialized')
 
-    def compute_state_value(self):
+    def compute_state_value(self, plot_name='SARSA'):
         self.logger.info('Compute SARSA')
-        self.td_control(algo = self.sarsa_formula, plot_name='SARSA')
+        self.td_control(algo = self.sarsa_formula, plot_name=plot_name)
 
 
 class QLearning(TemporalDifferenceFunctions):
@@ -257,6 +260,6 @@ class QLearning(TemporalDifferenceFunctions):
         self.num_episodes = num_episodes
         self.logger.info('Q-Learning initialized')
 
-    def compute_state_value(self):
+    def compute_state_value(self, plot_name='QLearning'):
         self.logger.info('Compute Q-Learning')
-        self.td_control(algo = self.q_learning_formula, plot_name='QLearning')
+        self.td_control(algo = self.q_learning_formula, plot_name=plot_name)

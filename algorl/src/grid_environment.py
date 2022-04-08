@@ -232,6 +232,9 @@ class GridWorldExamples(ABC):
 
 class RussellNorvigGridworld(GridWorldExamples):
     '''Russell & Norvig Gridworld environment'''
+    def __init__(self):
+        super().__init__()
+
     def gridword():
         return MakeGrid(
             walls = [(1, 1)], 
