@@ -24,25 +24,10 @@ class TemporalDifferenceFunctions(object):
     """
     """
     def __init__(self) -> None:
-        pass
+        self.logger = logging.getLogger(__name__)
 
-    def get_action(self):
+    def get_random_action(self):
         return np.random.choice(self.env.possible_actions) 
-
-    def compute_policy(self, state, action):
-        return state, action, self.env.grid[self.env.new_state_given_action(state, action)]
-
-    def state_action_reward_path(self, state, action):
-        state_action_reward = []
-        num_of_steps = 0
-        while not self.env.is_terminal_state(state) and num_of_steps < self.num_episodes:
-            reward = self.env.grid[self.env.new_state_given_action(state, action)]
-            state_action_reward.append((state, action, reward))
-
-            state = self.env.new_state_given_action(state, action)
-            action = self.get_action()
-            num_of_steps += 1
-        return state_action_reward
     
     def epsilon_greedy(self, action):
         return np.random.choice(self.env.possible_actions) if np.random.rand() < self.epsilon else action
@@ -57,7 +42,7 @@ class TemporalDifferenceFunctions(object):
 
     def drew_policy(self, df, plot_name:str):
         df = df.idxmax(axis=1)
-        print(df)
+        self.logger.debug(df)
         arrow_symbols = {'U':'\u2191', 'D':'\u2193', 'L':'\u2190', 'R':'\u2192'}
         _, ax = plt.subplots()
         ax.set_axis_off()
@@ -75,12 +60,68 @@ class TemporalDifferenceFunctions(object):
                 else:
                     tb.add_cell(i, j, width, height, text=np.round(self.env.grid[i, j], 2), loc='center', facecolor='tomato')
             else:
-
                 arrows = f"${arrow_symbols[df[i, j]]}$"
                 tb.add_cell(i, j, width, height, text=arrows, loc='center', facecolor='white')
 
         self._drew_grid(tb, width, height, ax)
         plt.savefig(Path(self.env.images_dir, f'{plot_name}_state_values.png'), dpi=300)
+
+    def sarsa_formula(self, q_values_df, state, action, reward, next_state, next_action):
+        '''Q(S, A) <- Q(S, A) + alpha[R + gamma*Q(S', A') - Q(S, A)]'''
+        # Q[state][action] = Q[state][action] + alpha * reward + gamma * Q[next_state][next_action] - Q[state][action]
+        q_values_df.at[state, action] =\
+            q_values_df.at[state, action] + self.alfa *\
+                (reward + self.gamma * q_values_df.at[next_state, next_action] \
+                    - q_values_df.at[state, action])
+        return q_values_df
+
+    def q_learning_formula(self, q_values_df, state, action, reward, next_state, _):
+        '''Q(S, A) <- Q(S, A) + alpha[R + gamma * max[Q(S', a)] - Q(S, A)]'''
+        max_value = max(q_values_df.at[next_state, x] for x in self.env.possible_actions)
+        q_values_df.at[state, action] =\
+            q_values_df.at[state, action] + self.alfa *\
+                (reward+ self.gamma * max_value - q_values_df.at[state, action])
+        return q_values_df
+
+    def td_control(self, algo, plot_name:str):
+        # Initialize Q(s,a)
+        q_values_df = pd.DataFrame(
+            0, columns=self.env.possible_actions, index=self.env.all_states, dtype=float)
+
+        # Initialize Q(s,a), for all s element of S+, a element of A(s), arbitrarily except that Q(terminal,·) = 0
+        state_action_pairs = {state:self.get_random_action() for state in self.env.all_states}
+        # Initialize actions using epsilon greedy and value state of the greed         
+        for x, y in state_action_pairs.items():
+            state_action_pairs[x] = self.epsilon_greedy(y)
+
+        # Loop for each episode:
+        for epoch in range(self.num_of_epochs):
+            if epoch % (self.num_of_epochs/10) == 0:
+                self.logger.info(f'\tEpoch {epoch}')
+
+            # Get first state and action for the episode
+            state = self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] if None else self.starting_state
+            action = state_action_pairs[state]
+
+            # Loop for each step of the episode:
+            num_of_steps = 0
+            while not self.env.is_terminal_state(state) and num_of_steps < self.num_episodes:
+                # Generate trajectory
+                next_state = self.env.new_state_given_action(state, action)
+                next_action = self.epsilon_greedy(state_action_pairs[next_state])
+                reward = self.env.grid[next_state]
+                
+                # Difference SARSA and Q-learning
+                q_values_df = algo(q_values_df, state, action, reward, next_state, next_action)
+                
+                self.logger.debug(f'S: {state}, A: {action}, R:{q_values_df.at[state, action]:.3f}, S: {next_state}, A: {next_action}')
+                state_action_pairs[next_state] = next_action
+                state = next_state
+                action = next_action
+
+                num_of_steps += 1
+
+        self.drew_policy(q_values_df, plot_name=plot_name)
 
 
 class TabuladTD0(TemporalDifferenceFunctions):
@@ -99,37 +140,41 @@ class TabuladTD0(TemporalDifferenceFunctions):
             V(S) <- V(S)+alpha[R+gammaV(S')-V(S)]
         until S is terminal
     '''
-    def __init__(self, env, alfa:float = 0.5, gamma:float = 0.9,  num_of_epochs:int = 1_00, plot_name='TD0', reward = -1):
+    def __init__(
+        self, env, alfa:float = 0.5, gamma:float = 0.9, starting_state=(2,0),
+        num_of_epochs:int = 1_00, plot_name='TD0', reward = -1):
         """
         Initializes the grid world
         - env: grid_environment: A tabular environment created by Make class
         - discount_factor: float: discount factor
         - num_of_epochs: int: number of epochs 
         """
+        super().__init__()
         self.num_of_epochs = num_of_epochs
         self.gamma = gamma
         self.alfa = alfa
         self.env = env
+        self.starting_state = starting_state
         self.plot_name = plot_name
         self.reward = reward
+        self.logger.info('TD0 initialized')
 
     def compute_state_value(self):
+        self.logger.info('Compute TD0')
         for epoch in range(self.num_of_epochs):
             if epoch % (self.num_of_epochs/10) == 0:
-                print(f'Epoch {epoch}')
-            state = (2,0)
-            
-            while not self.env.is_terminal_state(state):
-                # print(state)
-                action = self.get_action()
-                new_state = self.env.new_state_given_action(state, action)
-                
-                self.env.grid[state] = self.env.grid[state] + self.alfa * (self.reward + self.gamma * self.env.grid[new_state] - self.env.grid[state])
-                state = new_state
+                self.logger.info(f'\tEpoch {epoch}')
 
-        self.env.render_state_value()
-        self.env.drew_policy(plot_name=self.plot_name)
-        self.env.draw_state_value(plot_name=self.plot_name)
+            state = self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] if None else self.starting_state
+            done = False
+            while not done:
+                action = self.get_random_action()
+                next_state = self.env.new_state_given_action(state, action)
+                self.logger.debug(f'state: {state}, action: {action}, new state: {next_state}')
+                # V[state] = V[state] + alphas * reward + gamma * V[next_state] * (not done) - V[state]
+                self.env.grid[state] = self.env.grid[state] + self.alfa * (self.reward + self.gamma * self.env.grid[next_state] * (not done) - self.env.grid[state])
+                state = next_state
+                done = self.env.is_terminal_state(state)
 
 
 class Sarsa(TemporalDifferenceFunctions):
@@ -150,7 +195,7 @@ class Sarsa(TemporalDifferenceFunctions):
     until S is terminal
     '''
     def __init__(
-        self, env, alfa:float = 0.5, gamma:float = 0.9,  
+        self, env, alfa:float = 0.5, gamma:float = 0.9,  starting_state=(2,0), 
         num_of_epochs:int = 1_000, num_episodes =10_000, epsilon = 0.1,
         plot_name='Sarsa', reward = -1):
         """
@@ -159,48 +204,21 @@ class Sarsa(TemporalDifferenceFunctions):
         - discount_factor: float: discount factor
         - num_of_epochs: int: number of epochs 
         """
+        super().__init__()
         self.num_of_epochs = num_of_epochs
         self.gamma = gamma
         self.alfa = alfa
         self.env = env
+        self.starting_state = starting_state
         self.plot_name = plot_name
         self.epsilon = epsilon
         self.reward = reward
         self.num_episodes = num_episodes
+        self.logger.info('SARSA initialized')
 
-    def compute_state_value(self):
-        # Initialize Q(s,a
-        q_values_df = pd.DataFrame(
-            0, columns=self.env.possible_actions, index=self.env.all_states, dtype=float)
-
-        # Initialize actions using epsilon greedy and value state of the greed 
-        state_action_pairs = {state:self.get_action() for state in self.env.all_states}
-        for x, y in state_action_pairs.items():
-            state_action_pairs[x] = self.epsilon_greedy(y)
-        # state_action_pairs = {(0, 0): 'R', (0, 1): 'D', (0, 2): 'L', (1, 0): 'U', (1, 2): 'D', (2, 0): 'R', (2, 1): 'R', (2, 2): 'U', (2, 3): 'U'}
-
-        for epoch in range(self.num_of_epochs):
-            if epoch % (self.num_of_epochs/10) == 0:
-                print(f'Epoch {epoch}')
-            state = (2,0) # self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] 
-            action = state_action_pairs[state]
-            num_of_steps = 0
-            while not self.env.is_terminal_state(state) and num_of_steps < self.num_episodes:
-                new_state = self.env.new_state_given_action(state, action)
-
-                new_action = self.epsilon_greedy(state_action_pairs[new_state])
-
-                q_values_df.at[state, action] =\
-                    q_values_df.at[state, action] + self.alfa *\
-                        (self.env.grid[new_state]+ self.gamma * q_values_df.at[new_state, new_action] - q_values_df.at[state, action])
-                
-                state_action_pairs[new_state] = new_action
-                state = new_state
-                action = new_action
-
-                num_of_steps += 1
-
-        self.drew_policy(q_values_df, plot_name=self.plot_name)
+    def compute_state_value(self, plot_name='SARSA'):
+        self.logger.info('Compute SARSA')
+        self.td_control(algo = self.sarsa_formula, plot_name=plot_name)
 
 
 class QLearning(TemporalDifferenceFunctions):
@@ -208,20 +226,20 @@ class QLearning(TemporalDifferenceFunctions):
     Q-learning for estimating pi=pi*
     Page 131 of Sutton and Barto.
 
-    Algorithm parameters: step size alpha element of (0, 1], small " > 0
+    Algorithm parameters: step size alpha element of (0, 1], small epsilon > 0
     Initialize Q(s,a), for all s element of S+,a element of A(s), arbitrarily except that Q(terminal,·) = 0
 
     Loop for each episode: 
         Initialize S
         Loop for each step of episode:
-            Choose A' from S' using policy derived from Q (e.g., "-greedy) 
+            Choose A' from S' using policy derived from Q (e.g., epsilon-greedy) 
             Tale action A, observe R, S'
             Q(S, A) <- Q(S, A) + alpha[R + gamma * max[Q(S', a)] - Q(S, A)]
             S <- S'; A <- A';
     until S is terminal
     '''
     def __init__(
-        self, env, alfa:float = 0.5, gamma:float = 0.9,  
+        self, env, alfa:float = 0.5, gamma:float = 0.9,  starting_state=(2,0), 
         num_of_epochs:int = 1_000, num_episodes =10_000, epsilon = 0.1,
         plot_name='Qlearning', reward = -1):
         """
@@ -230,45 +248,18 @@ class QLearning(TemporalDifferenceFunctions):
         - discount_factor: float: discount factor
         - num_of_epochs: int: number of epochs 
         """
+        super().__init__()
         self.num_of_epochs = num_of_epochs
         self.gamma = gamma
         self.alfa = alfa
         self.env = env
+        self.starting_state = starting_state
         self.plot_name = plot_name
         self.epsilon = epsilon
         self.reward = reward
         self.num_episodes = num_episodes
+        self.logger.info('Q-Learning initialized')
 
-    def compute_state_value(self):
-        # Initialize Q(s,a
-        q_values_df = pd.DataFrame(
-            0, columns=self.env.possible_actions, index=self.env.all_states, dtype=float)
-
-        # Initialize actions using epsilon greedy and value state of the greed 
-        state_action_pairs = {state:self.get_action() for state in self.env.all_states}
-        for x, y in state_action_pairs.items():
-            state_action_pairs[x] = self.epsilon_greedy(y)
-        
-
-        for epoch in range(self.num_of_epochs):
-            if epoch % (self.num_of_epochs/10) == 0:
-                print(f'Epoch {epoch}')
-            state = (2,0)
-            action = state_action_pairs[state]
-            num_of_steps = 0
-            while not self.env.is_terminal_state(state) and num_of_steps < self.num_episodes:
-                new_state = self.env.new_state_given_action(state, action)
-                new_action = self.epsilon_greedy(state_action_pairs[new_state])
-                max_value = max(q_values_df.at[new_state, x] for x in self.env.possible_actions)
-
-                q_values_df.at[state, action] =\
-                    q_values_df.at[state, action] + self.alfa *\
-                        (self.env.grid[new_state]+ self.gamma * max_value - q_values_df.at[state, action])
-                
-                state_action_pairs[new_state] = new_action
-                state = new_state
-                action = new_action
-
-                num_of_steps += 1
-        self.drew_policy(q_values_df, plot_name=self.plot_name)
-
+    def compute_state_value(self, plot_name='QLearning'):
+        self.logger.info('Compute Q-Learning')
+        self.td_control(algo = self.q_learning_formula, plot_name=plot_name)
