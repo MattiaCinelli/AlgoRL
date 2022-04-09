@@ -24,14 +24,14 @@ class DP(object):
             Delta <- 0
             Loop for each s element of S:
                 v <- V(s)
-                $ V(s) <- sum_{s', r}p(s', r | s, pi(s))[r + gamma V(s')] $
+                V(s) <- sum{s', r}p(s', r| s, pi(s))[r + gamma*V(s')]
                 delta <- max(delta, |v delta V (s)|)
         until delta < theta (a small positive number determining the accuracy of estimation)
     3. Policy Improvement
         policy-stable true 
         For each s element of S:
             old-action <- pi(s)
-            $ pi(s) <- underset{a}{argmax} sum_{s', r}p(s', r | s, pi(s))[r + gamma V(s')]   $
+            pi(s) <- underset{a}{argmax} sum_{s', r} p(s', r | s, pi(s))[r + gamma V(s')]
             If old-action != pi(s), then policy-stable false
         If policy-stable, then stop and return V almost equal to v* and pi almost equal to pi*; else go to 2
     '''

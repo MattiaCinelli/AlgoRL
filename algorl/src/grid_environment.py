@@ -34,7 +34,6 @@ class MakeGrid():
         - initial_state: tuple: initial state, where the agent starts
         - images_dir: str: path to the directory where the images will be saved
         - some_value: float: some value to initialize the grid
-
         
         """
         if terminal_states is None:
@@ -241,7 +240,6 @@ class RussellNorvigGridworld(GridWorldExamples):
             terminal_states = {(0, 3): 1, (1, 3): -10}, 
             plot_name = 'RussellNorvig'
             )
-
 
 class gridwordB(GridWorldExamples):
     def gridword():

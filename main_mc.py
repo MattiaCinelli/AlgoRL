@@ -12,8 +12,6 @@ from algorl.src.MC import MCPrediction, FirstVisitMCPredictions, MCExploringStar
 
 def test_MCPrediction(env):
     mc = MCPrediction(env)
-    # mc = FirstVisitMCPredictions(env)
-    # mc = MCExploringStarts(env)
     mc.compute_state_value()
     env.drew_statevalue_and_policy(plot_title = 'MC_Prediction')
 

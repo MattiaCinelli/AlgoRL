@@ -67,7 +67,7 @@ class TemporalDifferenceFunctions(object):
         plt.savefig(Path(self.env.images_dir, f'{plot_name}_state_values.png'), dpi=300)
 
     def sarsa_formula(self, q_values_df, state, action, reward, next_state, next_action):
-        '''Q(S, A) <- Q(S, A) + alpha[R + gamma*Q(S', A') - Q(S, A)]'''
+        '''Q(S, A) <- Q(S, A) + alpha[R + gamma * Q(S', A') - Q(S, A)]'''
         # Q[state][action] = Q[state][action] + alpha * reward + gamma * Q[next_state][next_action] - Q[state][action]
         q_values_df.at[state, action] =\
             q_values_df.at[state, action] + self.alfa *\
@@ -111,7 +111,7 @@ class TemporalDifferenceFunctions(object):
                 next_action = self.epsilon_greedy(state_action_pairs[next_state])
                 reward = self.env.grid[next_state]
                 
-                # Difference SARSA and Q-learning
+                # Compute the pair state-actions
                 q_values_df = algo(q_values_df, state, action, reward, next_state, next_action)
                 
                 self.logger.debug(f'S: {state}, A: {action}, R:{q_values_df.at[state, action]:.3f}, S: {next_state}, A: {next_action}')
@@ -124,7 +124,7 @@ class TemporalDifferenceFunctions(object):
         self.drew_policy(q_values_df, plot_name=plot_name)
 
 
-class TabuladTD0(TemporalDifferenceFunctions):
+class TabularTD0(TemporalDifferenceFunctions):
     '''
     Monte Carlo Prediction to estimate state-action values
     Page 120 of Sutton and Barto.
@@ -172,7 +172,8 @@ class TabuladTD0(TemporalDifferenceFunctions):
                 next_state = self.env.new_state_given_action(state, action)
                 self.logger.debug(f'state: {state}, action: {action}, new state: {next_state}')
                 # V[state] = V[state] + alphas * reward + gamma * V[next_state] * (not done) - V[state]
-                self.env.grid[state] = self.env.grid[state] + self.alfa * (self.reward + self.gamma * self.env.grid[next_state] * (not done) - self.env.grid[state])
+                self.env.grid[state] = self.env.grid[state] +\
+                    self.alfa * (self.reward + self.gamma * self.env.grid[next_state] * (not done) - self.env.grid[state])
                 state = next_state
                 done = self.env.is_terminal_state(state)
 
