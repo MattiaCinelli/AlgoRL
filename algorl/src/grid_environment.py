@@ -131,10 +131,10 @@ class MakeGrid():
         # Add cells
         for (i, j), val in np.ndenumerate(self.grid):
             # State value
-            tb_st_value = self.__state_value_sub_method(tb_st_value, i, j, val)
+            tb_st_value = self.__state_value_sub_method(tb_st_value, i, j, np.round(val, 2))
 
             # Policy
-            tb_policy = self.__state_value_sub_policy(tb_policy, i, j, val)
+            tb_policy = self.__state_value_sub_policy(tb_policy, i, j, np.round(val, 2))
 
         self._drew_grid(tb_st_value, st_value)
         self._drew_grid(tb_policy, policy)
@@ -170,7 +170,7 @@ class MakeGrid():
             tb_st_value.add_cell(i, j, self.width, self.height, loc='center', facecolor='dimgray')
         elif (i, j) in self.terminal_states_list:
             if self.grid[i, j]>=0:
-                tb_st_value.add_cell(i, j, self.width, self.height, text=val, loc='center', facecolor='lightgreen')
+                tb_st_value.add_cell(i, j, self.width, self.height, text=np.round(val, 2), loc='center', facecolor='lightgreen')
             else:
                 tb_st_value.add_cell(i, j, self.width, self.height, text=np.round(val, 2), loc='center', facecolor='tomato')
         else:

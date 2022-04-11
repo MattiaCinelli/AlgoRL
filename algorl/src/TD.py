@@ -275,7 +275,7 @@ class NstepTD(TemporalDifferenceFunctions): # page 144
     '''
     def __init__(
         self, env, alfa:float = 0.5, gamma:float = 0.9, starting_state:tuple=None,
-        num_of_epochs:int = 1_00, plot_name='TD0', step_cost = -1):
+        num_of_epochs:int = 1_00, plot_name='TD0', step_cost = -1, n_step = 1):
         """
         Initializes the grid world
         - env: grid_environment: A tabular environment created by Make class
@@ -290,11 +290,12 @@ class NstepTD(TemporalDifferenceFunctions): # page 144
         self.starting_state = env.initial_state if starting_state is None else starting_state
         self.plot_name = plot_name
         self.step_cost = step_cost
+        self.n_step = n_step
         self.logger.info('NstepTD initialized')
 
     def compute_state_value(self):
         self.logger.info('Compute NstepTD')
-        n = 1
+        self.logger.info(f'n: {self.n_step}')
         for epoch in range(self.num_of_epochs):
             if epoch % (self.num_of_epochs/10) == 0:
                 self.logger.info(f'\tEpoch {epoch}')
@@ -315,12 +316,13 @@ class NstepTD(TemporalDifferenceFunctions): # page 144
                     rewards.append(reward)
                     if self.env.is_terminal_state(state):
                         T = t + 1
+                        done = True
 
-                r = t - n + 1
+                r = t - self.n_step + 1
                 if r >= 0:
-                    G = sum(rewards[x] * self.gamma**(r-x) for x in range(r, np.min([r+n, T])))
-                    if r + n < T:
-                        G += self.gamma**(n) * self.env.grid[states[r+n-1]]
+                    G = sum(rewards[x] * self.gamma**(r-x) for x in range(r, np.min([r+self.n_step, T])))
+                    if r + self.n_step < T:
+                        G += self.gamma**(self.n_step) * self.env.grid[states[r+self.n_step-1]]
 
                     if not self.env.is_terminal_state(state):
                         self.env.grid[states[r]] = self.env.grid[states[r]] + self.alfa *\
@@ -328,5 +330,7 @@ class NstepTD(TemporalDifferenceFunctions): # page 144
 
                 if r == (T - 1):
                     done = True
+                    self.logger.info(f'\tEpoch {epoch} done (r == (T - 1)')
                 t += 1
                 state = next_state
+        
