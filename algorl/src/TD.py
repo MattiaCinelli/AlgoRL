@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 # Third party libraries
+import random
 import pandas as pd
 import numpy as np
 from icecream import ic
@@ -77,6 +78,7 @@ class TemporalDifferenceFunctions(object):
 
     def q_learning_formula(self, q_values_df, state, action, reward, next_state, _):
         '''Q(S, A) <- Q(S, A) + alpha[R + gamma * max[Q(S', a)] - Q(S, A)]'''
+        # Q[state][action] = Q[state][action] + alpha * reward + gamma * Q[next_state].max() - Q[state][action]
         max_value = max(q_values_df.at[next_state, x] for x in self.env.possible_actions)
         q_values_df.at[state, action] =\
             q_values_df.at[state, action] + self.alfa *\
@@ -100,7 +102,7 @@ class TemporalDifferenceFunctions(object):
                 self.logger.info(f'\tEpoch {epoch}')
 
             # Get first state and action for the episode
-            state = self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] if None else self.starting_state
+            state = random.choice(self.env.available_states) if self.starting_state is None else self.starting_state
             action = state_action_pairs[state]
 
             # Loop for each step of the episode:
@@ -110,10 +112,10 @@ class TemporalDifferenceFunctions(object):
                 next_state = self.env.new_state_given_action(state, action)
                 next_action = self.epsilon_greedy(state_action_pairs[next_state])
                 reward = self.env.grid[next_state]
-                
+
                 # Compute the pair state-actions
                 q_values_df = algo(q_values_df, state, action, reward, next_state, next_action)
-                
+
                 self.logger.debug(f'S: {state}, A: {action}, R:{q_values_df.at[state, action]:.3f}, S: {next_state}, A: {next_action}')
                 state_action_pairs[next_state] = next_action
                 state = next_state
@@ -154,7 +156,7 @@ class TabularTD0(TemporalDifferenceFunctions):
         self.gamma = gamma
         self.alfa = alfa
         self.env = env
-        self.starting_state = starting_state
+        self.starting_state = env.initial_state if starting_state is None else starting_state
         self.plot_name = plot_name
         self.reward = reward
         self.logger.info('TD0 initialized')
@@ -165,7 +167,7 @@ class TabularTD0(TemporalDifferenceFunctions):
             if epoch % (self.num_of_epochs/10) == 0:
                 self.logger.info(f'\tEpoch {epoch}')
 
-            state = self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] if None else self.starting_state
+            state = self.starting_state
             done = False
             while not done:
                 action = self.get_random_action()
@@ -210,7 +212,7 @@ class Sarsa(TemporalDifferenceFunctions):
         self.gamma = gamma
         self.alfa = alfa
         self.env = env
-        self.starting_state = starting_state
+        self.starting_state = env.initial_state if starting_state is None else starting_state
         self.plot_name = plot_name
         self.epsilon = epsilon
         self.reward = reward
@@ -254,7 +256,7 @@ class QLearning(TemporalDifferenceFunctions):
         self.gamma = gamma
         self.alfa = alfa
         self.env = env
-        self.starting_state = starting_state
+        self.starting_state = env.initial_state if starting_state is None else starting_state
         self.plot_name = plot_name
         self.epsilon = epsilon
         self.reward = reward
@@ -264,3 +266,67 @@ class QLearning(TemporalDifferenceFunctions):
     def compute_state_value(self, plot_name='QLearning'):
         self.logger.info('Compute Q-Learning')
         self.td_control(algo = self.q_learning_formula, plot_name=plot_name)
+
+
+class NstepTD(TemporalDifferenceFunctions): # page 144
+    '''
+    n-step TD for estimating vi=vi*
+    Page 144 of Sutton and Barto.
+    '''
+    def __init__(
+        self, env, alfa:float = 0.5, gamma:float = 0.9, starting_state:tuple=None,
+        num_of_epochs:int = 1_00, plot_name='TD0', step_cost = -1):
+        """
+        Initializes the grid world
+        - env: grid_environment: A tabular environment created by Make class
+        - discount_factor: float: discount factor
+        - num_of_epochs: int: number of epochs 
+        """
+        super().__init__()
+        self.num_of_epochs = num_of_epochs
+        self.gamma = gamma
+        self.alfa = alfa
+        self.env = env
+        self.starting_state = env.initial_state if starting_state is None else starting_state
+        self.plot_name = plot_name
+        self.step_cost = step_cost
+        self.logger.info('NstepTD initialized')
+
+    def compute_state_value(self):
+        self.logger.info('Compute NstepTD')
+        n = 1
+        for epoch in range(self.num_of_epochs):
+            if epoch % (self.num_of_epochs/10) == 0:
+                self.logger.info(f'\tEpoch {epoch}')
+
+            T = 100_000
+            t = 0
+            states, rewards = [], []
+            state = self.starting_state
+            done = False
+            while not done:
+                if t < T:
+                    action = self.get_random_action()
+                    self.logger.debug(f'State: {state}, Action: {action}')
+                    next_state = self.env.new_state_given_action(state, action)
+                    self.logger.debug(f'Next State: {next_state}')
+                    reward = self.env.grid[next_state] + self.step_cost 
+                    states.append(state)
+                    rewards.append(reward)
+                    if self.env.is_terminal_state(state):
+                        T = t + 1
+
+                r = t - n + 1
+                if r >= 0:
+                    G = sum(rewards[x] * self.gamma**(r-x) for x in range(r, np.min([r+n, T])))
+                    if r + n < T:
+                        G += self.gamma**(n) * self.env.grid[states[r+n-1]]
+
+                    if not self.env.is_terminal_state(state):
+                        self.env.grid[states[r]] = self.env.grid[states[r]] + self.alfa *\
+                            (G - self.env.grid[states[r]])
+
+                if r == (T - 1):
+                    done = True
+                t += 1
+                state = next_state

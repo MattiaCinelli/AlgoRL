@@ -1,5 +1,6 @@
 """Simple script to run snips of code"""
 # Standard Libraries
+import re
 import sys
 from pathlib import Path
 
@@ -230,7 +231,10 @@ class GridWorldExamples(ABC):
         pass
 
 class RussellNorvigGridworld(GridWorldExamples):
-    '''Russell & Norvig Gridworld environment'''
+    '''
+    Russell & Norvig Gridworld environment
+    from Artificial Intelligence: A Modern Approach by S. Russell and P. Norvig
+    '''
     def __init__(self):
         super().__init__()
 
@@ -238,7 +242,8 @@ class RussellNorvigGridworld(GridWorldExamples):
         return MakeGrid(
             walls = [(1, 1)], 
             terminal_states = {(0, 3): 1, (1, 3): -10}, 
-            plot_name = 'RussellNorvig'
+            plot_name = 'RussellNorvig',
+            initial_state=(2, 0)
             )
 
 class gridwordB(GridWorldExamples):
@@ -280,4 +285,9 @@ class gridwordE(GridWorldExamples):
             walls=list(zip(rows, cols)),
             terminal_states={(5, 4): 10, (0, 9): -10},
         )
-
+"""
+class FrozenLake8x8(GridWorldExamples):
+    def gritword():
+        import gym
+        return gym.make("FrozenLake8x8-v1")
+"""

@@ -19,10 +19,14 @@ def test_Sarsa(env, grid_name):
 def test_QLearning(env, grid_name):
     QLearning(env).compute_state_value(plot_name=f'qlearn{grid_name}')
     
+def test_NstepTD(env, grid_name):
+    NstepTD(env).compute_state_value()
+    env.drew_statevalue_and_policy(plot_title = f'NstepTD_{grid_name}')
 
 if __name__ == "__main__":
     for gridword in GridWorldExamples.__subclasses__():
-        test_TabularTD0(gridword.gridword(), grid_name = gridword.__name__)
-        test_Sarsa(gridword.gridword(), grid_name = gridword.__name__)
-        test_QLearning(gridword.gridword(), grid_name = gridword.__name__)
-        # sys.exit()
+        # test_TabularTD0(gridword.gridword(), grid_name = gridword.__name__)
+        # test_Sarsa(gridword.gridword(), grid_name = gridword.__name__)
+        # test_QLearning(gridword.gridword(), grid_name = gridword.__name__)
+        test_NstepTD(gridword.gridword(), grid_name = gridword.__name__)
+        sys.exit()
