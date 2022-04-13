@@ -300,7 +300,7 @@ class NstepTD(TemporalDifferenceFunctions): # page 144
             if epoch % (self.num_of_epochs/10) == 0:
                 self.logger.info(f'\tEpoch {epoch}')
 
-            T = 100_000
+            T = 100_000 # It's the last time step of the episode
             t = 0
             states, rewards = [], []
             state = self.starting_state
@@ -315,7 +315,7 @@ class NstepTD(TemporalDifferenceFunctions): # page 144
                     states.append(state)
                     rewards.append(reward)
                     if self.env.is_terminal_state(state):
-                        T = t + 1
+                        T = t + 1 
                         done = True
 
                 r = t - self.n_step + 1

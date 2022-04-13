@@ -6,7 +6,8 @@
 # Local imports
 from algorl.logs import logging
 from algorl.src.grid_environment import *
-from algorl.src.TD import *
+from algorl.src.TD import TabularTD0, Sarsa, QLearning
+from algorl.src.Nstep import NstepTD
 
 def test_TabularTD0(env, grid_name):
     tdl = TabularTD0(env)
@@ -19,14 +20,22 @@ def test_Sarsa(env, grid_name):
 def test_QLearning(env, grid_name):
     QLearning(env).compute_state_value(plot_name=f'qlearn{grid_name}')
     
-def test_NstepTD(env, grid_name, n_step):
-    NstepTD(env, n_step=n_step).compute_state_value()
+def test_NstepTDv1(env, grid_name, n_step):
+    # NstepTD(env, n_step=n_step).compute_state_value()
     env.drew_statevalue_and_policy(plot_title = f'{n_step}-stepTD_{grid_name}')
+
+def test_NstepTDv2(env, grid_name, n_step):
+    mc = NstepTD(env)
+    mc.compute_state_value()
+    env.drew_statevalue_and_policy(plot_title = 'MC_Prediction')
+
+    # MCPrediction(env, n_step=n_step).compute_state_value()
+    # env.drew_statevalue_and_policy(plot_title = f'{n_step}-stepTD_{grid_name}')
 
 if __name__ == "__main__":
     for gridword in GridWorldExamples.__subclasses__():
         # test_TabularTD0(gridword.gridword(), grid_name = gridword.__name__)
         # test_Sarsa(gridword.gridword(), grid_name = gridword.__name__)
         # test_QLearning(gridword.gridword(), grid_name = gridword.__name__)
-        test_NstepTD(gridword.gridword(), grid_name = gridword.__name__, n_step=3)
+        test_NstepTDv2(gridword.gridword(), grid_name = gridword.__name__, n_step=3)
         sys.exit()

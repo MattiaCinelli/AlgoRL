@@ -99,7 +99,7 @@ class MCPrediction(MonteCarloFunctions):
     - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 92
     '''
     def __init__(
-        self, env, discount_factor:float = 0.9, 
+        self, env, discount_factor:float = 0.9, starting_state:tuple=None,
         num_of_epochs:int = 1_000, max_step=100):
         """
         Initializes the grid world
@@ -112,6 +112,7 @@ class MCPrediction(MonteCarloFunctions):
         self.max_step = max_step
         self.num_of_epochs = num_of_epochs
         self.discount_factor = discount_factor
+        self.starting_state = env.initial_state if starting_state is None else starting_state
 
     def compute_state_value(self):
         # Initialize dictionary for final state value
@@ -127,7 +128,7 @@ class MCPrediction(MonteCarloFunctions):
             ## Create Path
             ###############
             # Compute random first state
-            first_state = self.env.available_states[np.random.choice(len(self.env.available_states), 1)[0]]
+            first_state = self.starting_state
             # Random  action for first state
             first_action = self.get_action()
             self.logger.debug(f'First state: {first_state}, action: {first_action}')
@@ -162,7 +163,7 @@ class FirstVisitMCPredictions(MonteCarloFunctions):
     - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 92
     '''
     def __init__(
-        self, env, discount_factor:float = 0.9, 
+        self, env, discount_factor:float = 0.9, starting_state:tuple=None,
         num_episodes:int = 100, num_of_epochs:int = 1_000, plot_name:str = 'grid_world'
         ):
         """
@@ -179,6 +180,7 @@ class FirstVisitMCPredictions(MonteCarloFunctions):
         self.num_of_epochs = num_of_epochs
         self.discount_factor = discount_factor
         self.env = env
+        self.starting_state = env.initial_state if starting_state is None else starting_state
 
     def compute_state_value(self):
         state_value = pd.DataFrame({"states":self.env.available_states, 'times':0, 'sum_value':0})
@@ -191,7 +193,7 @@ class FirstVisitMCPredictions(MonteCarloFunctions):
             ## Create Path
             ################
             # Compute random first state
-            first_state = self.env.available_states[np.random.choice(len(self.env.available_states),1 )[0]] 
+            first_state = first_state = self.starting_state
             # Random  action for first state
             first_action = self.get_action()
             # Compute all following states and actions
@@ -245,7 +247,7 @@ class MCExploringStarts(MonteCarloFunctions):
             pi(St) argmaxa Q(St, a)
     '''
     def __init__(
-        self, env, discount_factor:float = 0.9, num_episodes:int = 100, 
+        self, env, discount_factor:float = 0.9, num_episodes:int = 100, starting_state:tuple=None,
         num_of_epochs:int = 1_000, plot_name:str = 'MCExploringStarts'):
         """
         Initializes the grid world
@@ -262,6 +264,7 @@ class MCExploringStarts(MonteCarloFunctions):
         self.discount_factor = discount_factor
         self.plot_name = plot_name
         self.env = env
+        self.starting_state = env.initial_state if starting_state is None else starting_state
 
     def compute_state_value(self):
         state_list = []
@@ -282,8 +285,7 @@ class MCExploringStarts(MonteCarloFunctions):
             ################
             ## Create Path
             ################
-            first_state = self.env.available_states[
-                np.random.choice(len(self.env.available_states),1 )[0]] # (2,0)
+            first_state = first_state = self.starting_state
             state_action_reward = self.state_action_reward_path(
                 first_state, state_action = state_action_initialized)
 
