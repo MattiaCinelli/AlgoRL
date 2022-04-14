@@ -71,7 +71,7 @@ class TemporalDifferenceFunctions(object):
         '''Q(S, A) <- Q(S, A) + alpha[R + gamma * Q(S', A') - Q(S, A)]'''
         # Q[state][action] = Q[state][action] + alpha * reward + gamma * Q[next_state][next_action] - Q[state][action]
         q_values_df.at[state, action] =\
-            q_values_df.at[state, action] + self.alfa *\
+            q_values_df.at[state, action] + self.alpha *\
                 (reward + self.gamma * q_values_df.at[next_state, next_action] \
                     - q_values_df.at[state, action])
         return q_values_df
@@ -81,7 +81,7 @@ class TemporalDifferenceFunctions(object):
         # Q[state][action] = Q[state][action] + alpha * reward + gamma * Q[next_state].max() - Q[state][action]
         max_value = max(q_values_df.at[next_state, x] for x in self.env.possible_actions)
         q_values_df.at[state, action] =\
-            q_values_df.at[state, action] + self.alfa *\
+            q_values_df.at[state, action] + self.alpha *\
                 (reward+ self.gamma * max_value - q_values_df.at[state, action])
         return q_values_df
 
@@ -132,7 +132,7 @@ class TabularTD0(TemporalDifferenceFunctions):
     Page 120 of Sutton and Barto.
 
     Input: the policy \pi to be evaluated
-    Algorithm parameter: step size alfa element of (0, 1]
+    Algorithm parameter: step size alpha element of (0, 1]
     Initialize V(s), for all s element S+, arbitrarily except that V(terminal) = 0
     Loop for each episode: 
         Initialize S
@@ -143,7 +143,7 @@ class TabularTD0(TemporalDifferenceFunctions):
         until S is terminal
     '''
     def __init__(
-        self, env, alfa:float = 0.5, gamma:float = 0.9, starting_state=(2,0),
+        self, env, alpha:float = 0.5, gamma:float = 0.9, starting_state=(2,0),
         num_of_epochs:int = 1_00, plot_name='TD0', reward = -1):
         """
         Initializes the grid world
@@ -154,7 +154,7 @@ class TabularTD0(TemporalDifferenceFunctions):
         super().__init__()
         self.num_of_epochs = num_of_epochs
         self.gamma = gamma
-        self.alfa = alfa
+        self.alpha = alpha
         self.env = env
         self.starting_state = env.initial_state if starting_state is None else starting_state
         self.plot_name = plot_name
@@ -175,7 +175,7 @@ class TabularTD0(TemporalDifferenceFunctions):
                 self.logger.debug(f'state: {state}, action: {action}, new state: {next_state}')
                 # V[state] = V[state] + alphas * reward + gamma * V[next_state] * (not done) - V[state]
                 self.env.grid[state] = self.env.grid[state] +\
-                    self.alfa * (self.reward + self.gamma * self.env.grid[next_state] * (not done) - self.env.grid[state])
+                    self.alpha * (self.reward + self.gamma * self.env.grid[next_state] * (not done) - self.env.grid[state])
                 state = next_state
                 done = self.env.is_terminal_state(state)
 
@@ -198,7 +198,7 @@ class Sarsa(TemporalDifferenceFunctions):
     until S is terminal
     '''
     def __init__(
-        self, env, alfa:float = 0.5, gamma:float = 0.9,  starting_state=(2,0), 
+        self, env, alpha:float = 0.5, gamma:float = 0.9,  starting_state=(2,0), 
         num_of_epochs:int = 1_000, num_episodes =10_000, epsilon = 0.1,
         plot_name='Sarsa', reward = -1):
         """
@@ -210,7 +210,7 @@ class Sarsa(TemporalDifferenceFunctions):
         super().__init__()
         self.num_of_epochs = num_of_epochs
         self.gamma = gamma
-        self.alfa = alfa
+        self.alpha = alpha
         self.env = env
         self.starting_state = env.initial_state if starting_state is None else starting_state
         self.plot_name = plot_name
@@ -242,7 +242,7 @@ class QLearning(TemporalDifferenceFunctions):
     until S is terminal
     '''
     def __init__(
-        self, env, alfa:float = 0.5, gamma:float = 0.9,  starting_state=(2,0), 
+        self, env, alpha:float = 0.5, gamma:float = 0.9,  starting_state=(2,0), 
         num_of_epochs:int = 1_000, num_episodes =10_000, epsilon = 0.1,
         plot_name='Qlearning', reward = -1):
         """
@@ -254,7 +254,7 @@ class QLearning(TemporalDifferenceFunctions):
         super().__init__()
         self.num_of_epochs = num_of_epochs
         self.gamma = gamma
-        self.alfa = alfa
+        self.alpha = alpha
         self.env = env
         self.starting_state = env.initial_state if starting_state is None else starting_state
         self.plot_name = plot_name
@@ -268,13 +268,13 @@ class QLearning(TemporalDifferenceFunctions):
         self.td_control(algo = self.q_learning_formula, plot_name=plot_name)
 
 
-class NstepTD(TemporalDifferenceFunctions): # page 144
+class NstepTD(TemporalDifferenceFunctions):
     '''
     n-step TD for estimating vi=vi*
     Page 144 of Sutton and Barto.
     '''
     def __init__(
-        self, env, alfa:float = 0.5, gamma:float = 0.9, starting_state:tuple=None,
+        self, env, alpha:float = 0.5, gamma:float = 0.9, starting_state:tuple=None,
         num_of_epochs:int = 1_00, plot_name='TD0', step_cost = -1, n_step = 1):
         """
         Initializes the grid world
@@ -285,7 +285,7 @@ class NstepTD(TemporalDifferenceFunctions): # page 144
         super().__init__()
         self.num_of_epochs = num_of_epochs
         self.gamma = gamma
-        self.alfa = alfa
+        self.alpha = alpha
         self.env = env
         self.starting_state = env.initial_state if starting_state is None else starting_state
         self.plot_name = plot_name
@@ -325,7 +325,7 @@ class NstepTD(TemporalDifferenceFunctions): # page 144
                         G += self.gamma**(self.n_step) * self.env.grid[states[r+self.n_step-1]]
 
                     if not self.env.is_terminal_state(state):
-                        self.env.grid[states[r]] = self.env.grid[states[r]] + self.alfa *\
+                        self.env.grid[states[r]] = self.env.grid[states[r]] + self.alpha *\
                             (G - self.env.grid[states[r]])
 
                 if r == (T - 1):

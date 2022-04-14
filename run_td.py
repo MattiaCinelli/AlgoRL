@@ -25,9 +25,9 @@ def test_NstepTDv1(env, grid_name, n_step):
     env.drew_statevalue_and_policy(plot_title = f'{n_step}-stepTD_{grid_name}')
 
 def test_NstepTDv2(env, grid_name, n_step):
-    mc = NstepTD(env)
-    mc.compute_state_value()
-    env.drew_statevalue_and_policy(plot_title = 'MC_Prediction')
+    nstep_td = NstepTD(env, n_step=n_step, num_of_epochs=100)
+    nstep_td.compute_state_value()
+    env.drew_statevalue_and_policy(plot_title = f'{n_step}-stepTD_{grid_name}')
 
     # MCPrediction(env, n_step=n_step).compute_state_value()
     # env.drew_statevalue_and_policy(plot_title = f'{n_step}-stepTD_{grid_name}')
@@ -37,5 +37,5 @@ if __name__ == "__main__":
         # test_TabularTD0(gridword.gridword(), grid_name = gridword.__name__)
         # test_Sarsa(gridword.gridword(), grid_name = gridword.__name__)
         # test_QLearning(gridword.gridword(), grid_name = gridword.__name__)
-        test_NstepTDv2(gridword.gridword(), grid_name = gridword.__name__, n_step=3)
+        test_NstepTDv2(gridword.gridword(), grid_name = gridword.__name__, n_step=100)
         sys.exit()
