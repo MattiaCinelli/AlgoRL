@@ -11,7 +11,7 @@ from algorl.src.bandit import *
 
 logger = logging.getLogger(__name__)
 
-def greedy_sample_averages_test():
+def greedy_sample_averages():
     '''
     Test the greedy algorithm with sample_averages
     '''
@@ -20,7 +20,7 @@ def greedy_sample_averages_test():
     greedy.simulate(time = 500)
     bandits.plot_true_mean_vs_estimation()
 
-def greedy_step_size_test():
+def greedy_step_size():
     '''
     Test the greedy algorithm with sample_averages
     '''
@@ -29,7 +29,7 @@ def greedy_step_size_test():
     greedy.simulate(time = 500)
     bandits.plot_true_mean_vs_estimation()
 
-def greedy_sample_averages_test_with_initials():
+def greedy_sample_averages_with_initials():
     '''
     Test the greedy algorithm with sample_averages
     '''
@@ -55,9 +55,9 @@ def BernoulliThompsonSampling_test():
     ts = BernoulliThompsonSampling(bandits=bernoulli_bandits, bandit_type = "BernGreedy")
     BernGreedy_return, BernGreedy_actions = ts.simulate(time=100)
 
-    TestAll().plot_returns(pd.DataFrame({
+    CompareAllBanditsAlgos().plot_returns(pd.DataFrame({
         'BernTS':np.cumsum(BernTS_return), 'BernGreedy':np.cumsum(BernGreedy_return)}))
-    TestAll().plot_action_taken(pd.DataFrame({ 
+    CompareAllBanditsAlgos().plot_action_taken(pd.DataFrame({ 
         'BernTS':BernTS_actions, 'BernGreedy':BernGreedy_actions}))
     
 def GaussianThompsonSampling_test():
@@ -69,8 +69,8 @@ def GaussianThompsonSampling_test():
 
 def main(arms=5, number_of_trials=5):
     """Runs the main script"""
-    logger.info("Starting TestAll MAB")
-    test_all = TestAll(arms=arms, number_of_trials=number_of_trials #q_mean=[1,2,3,4,5]
+    logger.info("Starting CompareAllBanditsAlgos MAB")
+    test_all = CompareAllBanditsAlgos(arms=arms, number_of_trials=number_of_trials #q_mean=[1,2,3,4,5]
     )
     test_all.test_algo(OnlyExploration)
     test_all.test_algo(OnlyExploitation)
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     # greedy_step_size_test()
     # greedy_sample_averages_test_with_initials()
     # UCB_test()
-    main(arms=5, number_of_trials=50)
     # BernoulliThompsonSampling_test()
     # GaussianThompsonSampling_test()
     # GBA_test()
+    main(arms=5, number_of_trials=50)
