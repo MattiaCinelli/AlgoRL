@@ -9,25 +9,24 @@ from icecream import ic
 
 # Local imports
 from ..logs import logging
+from .tool_box import RLFunctions
 
-class NstepFunctions(object):
+class NstepFunctions(RLFunctions):
     """
     """
     def __init__(self) -> None:
+        RLFunctions.__init__(self)
         self.logger = logging.getLogger(__name__)
-        
-    def get_action(self):
-        '''Return random action among the option fo that state'''
-        return np.random.choice(self.env.possible_actions)
+        self.action_methods = {'random': self.get_random_action, 'greedy': self.greedy}
 
     def compute_policy(self, state, action):
         '''Return the state and action given in input plus the reward obtained from the new state'''
         return state, action, self.env.grid[self.env.new_state_given_action(state, action)]
 
-    def compute_trajectory(self):
+    def compute_trajectory(self, method='random'):
         '''Create the past S, R from starting state to the terminal state'''
         state = self.starting_state
-        action = self.get_action()
+        action = self.action_methods[method]()
         states, actions, rewards = [], [], []
         while not self.env.is_terminal_state(state):            
             new_state = self.env.new_state_given_action(state, action)
@@ -37,7 +36,7 @@ class NstepFunctions(object):
             rewards.append(reward)
 
             state = new_state
-            action = self.get_action()
+            action = self.action_methods[method]()
         return pd.DataFrame({'state': states, 'action': actions, 'reward': rewards}, index=range(1, len(states)+1))
 
     def compute_n_step_returns(self, df):
@@ -101,7 +100,7 @@ class NstepTD(NstepFunctions):
                         self.alpha * (states_returns.loc[index, 'G']- self.env.grid[states_returns.loc[index].state])
             
 
-class NstepSARSA():
+class NstepSARSA(NstepFunctions):
     '''
     n-step Sarsa for estimating Q==q* or q_{pi}
     Reference:
@@ -110,7 +109,7 @@ class NstepSARSA():
     '''
     def __init__(
         self, env, alpha:float = 0.5, gamma:float = 0.9, starting_state:tuple=None,
-        num_of_epochs:int = 1_000, n_step = 1):
+        epsilon:float=.1, num_of_epochs:int = 1_000, n_step = 1):
         """
         - env: grid_environment: A tabular environment created by Make class
         - gamma: discount_factor, float: discount factor
@@ -120,6 +119,7 @@ class NstepSARSA():
         self.env = env
         self.alpha = alpha
         self.n_step = n_step
+        self.epsilon = epsilon
         self.gamma = gamma
         self.num_of_epochs = num_of_epochs
         self.starting_state = env.initial_state if starting_state is None else starting_state
@@ -133,11 +133,12 @@ class NstepSARSA():
             ################
             ## Create Path
             ###############
-            trajectory_df = self.compute_trajectory()
+            trajectory_df = self.compute_trajectory(method='greedy')
             ic(trajectory_df)
             sys.exit()
 
-class NstepOffPolicuSARSA():
+
+class NstepOffPolicuSARSA(NstepFunctions):
     '''
     Reference:
     --------------------

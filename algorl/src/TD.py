@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 # Local imports
 from ..logs import logging
-from .tool_box import create_directory
+from .tool_box import create_directory, RLFunctions
 from matplotlib.table import Table
 
 # 1. Monte Carlo Prediction to estimate state-action values
@@ -21,17 +21,12 @@ from matplotlib.table import Table
 # Source:
 # https://people.cs.umass.edu/~barto/courses/cs687/Chapter%205.pdf
 
-class TemporalDifferenceFunctions(object):
+class TemporalDifferenceFunctions(RLFunctions):
     """
     """
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
-
-    def get_random_action(self):
-        return np.random.choice(self.env.possible_actions) 
-    
-    def epsilon_greedy(self, action):
-        return np.random.choice(self.env.possible_actions) if np.random.rand() < self.epsilon else action
+        RLFunctions.__init__(self)
 
     def _drew_grid(self, tb, width, height, ax):
         for i in range(self.env.grid_row):
@@ -294,6 +289,7 @@ class NstepTD(TemporalDifferenceFunctions):
         self.logger.info('NstepTD initialized')
 
     def compute_state_value(self):
+        '''Too formulaic, it needs to be refactored''' # TODO
         self.logger.info('Compute NstepTD')
         self.logger.info(f'n: {self.n_step}')
         for epoch in range(self.num_of_epochs):
