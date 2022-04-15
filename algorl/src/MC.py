@@ -114,7 +114,7 @@ class MCPrediction(MonteCarloFunctions):
         state_value = pd.DataFrame({"states":self.env.available_states, 'times':0, 'sum_value':0})
 
         for epoch in range(self.num_of_epochs):
-            if epoch % (self.num_of_epochs/10) == 0:
+            if epoch % 100 == 0:
                 print(f'Epoch {epoch}')
 
             ################
@@ -179,8 +179,8 @@ class FirstVisitMCPredictions(MonteCarloFunctions):
         state_value = pd.DataFrame({"states":self.env.available_states, 'times':0, 'sum_value':0})
 
         for epoch in range(self.num_of_epochs):
-            if epoch % (self.num_of_epochs/10) == 0:
-                print(f'Epoch {epoch}')
+            if epoch % 100 == 0:
+                self.logger.info(f'Epoch {epoch}')
 
             ################
             ## Create Path
@@ -272,8 +272,8 @@ class MCExploringStarts(MonteCarloFunctions):
         state_action_initialized = {
             state:self.get_random_action() for state in self.env.available_states}
         for epoch in range(self.num_of_epochs):
-            if epoch % (self.num_of_epochs/10) == 0:
-                print(f'Epoch {epoch}')
+            if epoch % 100 == 0:
+                self.logger.info(f'Epoch {epoch}')
 
             ################
             ## Create Path
