@@ -179,7 +179,7 @@ class MakeGrid():
 
     def __state_value_sub_policy(self, tb_policy, i, j, val):
         exploration = [
-            self.grid[self.new_state_given_action((i, j), action)]
+            self.grid[self.next_state_given_action((i, j), action)]
             for action in self.possible_actions
         ]
         best_actions = [self.possible_actions[x] for x in np.where(np.array(exploration)==max(exploration))[0]]
@@ -200,7 +200,7 @@ class MakeGrid():
             tb_policy.add_cell(i, j, self.width, self.height, text=arrows, loc='center', facecolor='white')
         return tb_policy
 
-    def new_state_given_action(self, state, action):
+    def next_state_given_action(self, state, action):
         """ Given a state and an action, returns the new state """
         new_state = tuple(map(sum, zip(state, self.action_space[action]))) # new state given action
         ## Bump into wall or border

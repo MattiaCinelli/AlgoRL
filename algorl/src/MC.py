@@ -9,6 +9,7 @@ from icecream import ic
 import matplotlib.pyplot as plt
 
 # Local imports
+from .tool_box import RLFunctions
 from ..logs import logging
 
 # 1. Monte Carlo Prediction to estimate state-action values
@@ -18,19 +19,11 @@ from ..logs import logging
 # Source:
 # https://people.cs.umass.edu/~barto/courses/cs687/Chapter%205.pdf
 
-class MonteCarloFunctions(object):
+class MonteCarloFunctions(RLFunctions):
     """
     """
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
-        
-    def get_action(self):
-        '''Return random action among the option fo that state'''
-        return np.random.choice(self.env.possible_actions)
-
-    def compute_policy(self, state, action):
-        '''Return the state and action given in input plus the reward obtained from the new state'''
-        return state, action, self.env.grid[self.env.new_state_given_action(state, action)]
 
     def state_reward_path(self, state, action):
         '''Create the past S, R from starting state to the terminal state'''
@@ -41,7 +34,7 @@ class MonteCarloFunctions(object):
             state_reward.append((state, reward))
 
             state = new_state
-            action = self.get_action()
+            action = self.get_random_action(state)
         return state_reward
 
     def state_action_reward_path(self, state, state_action):
@@ -130,7 +123,7 @@ class MCPrediction(MonteCarloFunctions):
             # Compute random first state
             first_state = self.starting_state
             # Random  action for first state
-            first_action = self.get_action()
+            first_action = self.get_random_action()
             self.logger.debug(f'First state: {first_state}, action: {first_action}')
             # Compute all following states and actions
             state_reward_path = self.state_reward_path(first_state, first_action)
@@ -195,7 +188,7 @@ class FirstVisitMCPredictions(MonteCarloFunctions):
             # Compute random first state
             first_state = first_state = self.starting_state
             # Random  action for first state
-            first_action = self.get_action()
+            first_action = self.get_random_action()
             # Compute all following states and actions
             state_reward_path = self.state_reward_path(first_state, first_action)
 
@@ -277,7 +270,7 @@ class MCExploringStarts(MonteCarloFunctions):
             "states":state_list, 'actions':action_list, 'times':0, 'sum_value':0})
 
         state_action_initialized = {
-            state:self.get_action() for state in self.env.available_states}
+            state:self.get_random_action() for state in self.env.available_states}
         for epoch in range(self.num_of_epochs):
             if epoch % (self.num_of_epochs/10) == 0:
                 print(f'Epoch {epoch}')

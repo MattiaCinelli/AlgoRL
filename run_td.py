@@ -7,7 +7,7 @@
 from algorl.logs import logging
 from algorl.src.grid_environment import *
 from algorl.src.TD import TabularTD0, Sarsa, QLearning
-from algorl.src.Nstep import NstepTD, NstepSARSA
+from algorl.src.Nstep import NStepTD, NStepSARSA
 
 def run_TabularTD0(env, grid_name):
     tdl = TabularTD0(env)
@@ -21,21 +21,21 @@ def run_QLearning(env, grid_name):
     QLearning(env).compute_state_value(plot_name=f'qlearn{grid_name}')
     
 def run_NstepTDv1(env, grid_name, n_step):
-    # NstepTD(env, n_step=n_step).compute_state_value()
+    # NStepTD(env, n_step=n_step).compute_state_value()
     env.drew_statevalue_and_policy(plot_title = f'{n_step}-stepTD_{grid_name}')
 
 def run_NstepTDv2(env, grid_name, n_step):
-    nstep_td = NstepTD(env, n_step=n_step, num_of_epochs=100)
+    nstep_td = NStepTD(env, n_step=n_step, num_of_epochs=100)
     nstep_td.compute_state_value()
     env.drew_statevalue_and_policy(plot_title = f'{n_step}-stepTD_{grid_name}')
 
 def run_NstepTDv2(env, grid_name, n_step):
-    nstep_td = NstepTD(env, n_step=n_step, num_of_epochs=100)
+    nstep_td = NStepTD(env, n_step=n_step, num_of_epochs=100)
     nstep_td.compute_state_value()
     env.drew_statevalue_and_policy(plot_title = f'{n_step}-stepTD_{grid_name}')
 
 def run_NstepSARSA(env, grid_name, n_step):
-    nstep_td = NstepSARSA(env, n_step=n_step, num_of_epochs=100)
+    nstep_td = NStepSARSA(env, n_step=n_step, num_of_epochs=500)
     nstep_td.compute_state_value()
     env.drew_statevalue_and_policy(plot_title = f'{n_step}-stepTD_{grid_name}')
 
@@ -44,6 +44,6 @@ if __name__ == "__main__":
         # run_TabularTD0(gridword.gridword(), grid_name = gridword.__name__)
         # run_Sarsa(gridword.gridword(), grid_name = gridword.__name__)
         # run_QLearning(gridword.gridword(), grid_name = gridword.__name__)
-        # run_NstepTDv2(gridword.gridword(), grid_name = gridword.__name__, n_step=100)
-        run_NstepSARSA(gridword.gridword(), grid_name = gridword.__name__, n_step=100)
+        # run_NstepTDv2(gridword.gridword(), grid_name = gridword.__name__, n_step=2)
+        run_NstepSARSA(gridword.gridword(), grid_name = gridword.__name__, n_step=2)
         sys.exit()

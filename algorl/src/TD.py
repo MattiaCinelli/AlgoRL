@@ -263,7 +263,7 @@ class QLearning(TemporalDifferenceFunctions):
         self.td_control(algo = self.q_learning_formula, plot_name=plot_name)
 
 
-class NstepTD(TemporalDifferenceFunctions):
+class NStepTD(TemporalDifferenceFunctions):
     '''
     n-step TD for estimating vi=vi*
     Page 144 of Sutton and Barto.
@@ -286,11 +286,11 @@ class NstepTD(TemporalDifferenceFunctions):
         self.plot_name = plot_name
         self.step_cost = step_cost
         self.n_step = n_step
-        self.logger.info('NstepTD initialized')
+        self.logger.info('NStepTD initialized')
 
     def compute_state_value(self):
         '''Too formulaic, it needs to be refactored''' # TODO
-        self.logger.info('Compute NstepTD')
+        self.logger.info('Compute NStepTD')
         self.logger.info(f'n: {self.n_step}')
         for epoch in range(self.num_of_epochs):
             if epoch % (self.num_of_epochs/10) == 0:
