@@ -10,6 +10,7 @@ from typing import List, Tuple
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm 
 from icecream import ic
+from plotnine import *
 
 # Local imports
 from ..logs import logging
@@ -130,20 +131,20 @@ class Bandits():
         '''
         Scatter plot of true mean vs estimation
         '''
-        colours = cm.rainbow(np.linspace(0, 1, len(self.q_mean)))
-        _, ax = plt.subplots(figsize=(7, 5))
-        ax.scatter(self.q_mean, self.bandit_df.loc[y_axis, :], c=colours)
-        ax.set_xlabel("Target")
-        ax.set_ylabel("Estimation")
-        ax.set_title("Target vs estimated values")
-        # Add text labels
-        for i, txt in enumerate(self.bandit_name):
-            ax.annotate(txt, (self.q_mean[i], self.bandit_df.loc[y_axis, :][i]))
-        # Add diagonal line
-        ax.plot([min(self.q_mean), max(self.q_mean)], [min(self.q_mean), max(self.q_mean)], 'k--')
-        plt.savefig(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
-        plt.close()
-
+        g = (
+            ggplot(self.bandit_df.T, aes(x='target', y=y_axis, color=self.bandit_df.columns), 
+            )
+            + geom_point()
+            + labs(x='Target (True Mean)', y='Estimated Mean', color='Bandits')
+            + ggtitle(f"Target vs estimated values ({self.number_of_arms}-bandits)")
+        ) + geom_segment( # Add diagonal line
+            aes(x = min(self.q_mean), xend = max(self.q_mean),
+                y = min(self.q_mean), yend = max(self.q_mean),
+                ), color = 'black', linetype='dashed', alpha=.5
+        ) + geom_text(self.bandit_df.T, aes(x='target', y=y_axis, label=self.bandit_df.columns),
+            ha='left', nudge_x=0.05, color='black'
+        )
+        g.save(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
 
 class BernoulliBandits(Bandits):
     def __init__(
