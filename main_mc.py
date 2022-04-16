@@ -10,17 +10,17 @@ from algorl.logs import logging
 from algorl.src.grid_environment import *
 from algorl.src.MC import MCPrediction, FirstVisitMCPredictions, MCExploringStarts
 
-def test_MCPrediction(env):
+def run_MCPrediction(env):
     mc = MCPrediction(env)
     mc.compute_state_value()
     env.drew_statevalue_and_policy(plot_title = 'MC_Prediction')
 
-def test_FirstVisitMCPredictions(env):
+def run_FirstVisitMCPredictions(env):
     mc = FirstVisitMCPredictions(env)
     mc.compute_state_value()
     env.drew_statevalue_and_policy(plot_title = 'MC_Prediction')
 
-def test_MCExploringStarts(env):
+def run_MCExploringStarts(env):
     mc = MCExploringStarts(env)
     mc.compute_state_value()
     env.drew_statevalue_and_policy(plot_title = 'MC_Prediction')
@@ -28,5 +28,5 @@ def test_MCExploringStarts(env):
 
 if __name__ == "__main__":
     for gridword in GridWorldExamples.__subclasses__():
-        test_MCPrediction(gridword.gridword())
+        run_MCPrediction(gridword.gridword())
     

@@ -17,7 +17,7 @@ from .tool_box import create_directory
 import sys
 
 
-class TestAll(object):
+class CompareAllBanditsAlgos(object):
     """
     Class for the testing of all MAB algorithms
     """

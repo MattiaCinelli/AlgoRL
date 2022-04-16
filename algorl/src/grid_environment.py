@@ -1,5 +1,6 @@
 """Simple script to run snips of code"""
 # Standard Libraries
+import re
 import sys
 from pathlib import Path
 
@@ -130,10 +131,10 @@ class MakeGrid():
         # Add cells
         for (i, j), val in np.ndenumerate(self.grid):
             # State value
-            tb_st_value = self.__state_value_sub_method(tb_st_value, i, j, val)
+            tb_st_value = self.__state_value_sub_method(tb_st_value, i, j, np.round(val, 2))
 
             # Policy
-            tb_policy = self.__state_value_sub_policy(tb_policy, i, j, val)
+            tb_policy = self.__state_value_sub_policy(tb_policy, i, j, np.round(val, 2))
 
         self._drew_grid(tb_st_value, st_value)
         self._drew_grid(tb_policy, policy)
@@ -169,7 +170,7 @@ class MakeGrid():
             tb_st_value.add_cell(i, j, self.width, self.height, loc='center', facecolor='dimgray')
         elif (i, j) in self.terminal_states_list:
             if self.grid[i, j]>=0:
-                tb_st_value.add_cell(i, j, self.width, self.height, text=val, loc='center', facecolor='lightgreen')
+                tb_st_value.add_cell(i, j, self.width, self.height, text=np.round(val, 2), loc='center', facecolor='lightgreen')
             else:
                 tb_st_value.add_cell(i, j, self.width, self.height, text=np.round(val, 2), loc='center', facecolor='tomato')
         else:
@@ -178,7 +179,7 @@ class MakeGrid():
 
     def __state_value_sub_policy(self, tb_policy, i, j, val):
         exploration = [
-            self.grid[self.new_state_given_action((i, j), action)]
+            self.grid[self.next_state_given_action((i, j), action)]
             for action in self.possible_actions
         ]
         best_actions = [self.possible_actions[x] for x in np.where(np.array(exploration)==max(exploration))[0]]
@@ -199,7 +200,7 @@ class MakeGrid():
             tb_policy.add_cell(i, j, self.width, self.height, text=arrows, loc='center', facecolor='white')
         return tb_policy
 
-    def new_state_given_action(self, state, action):
+    def next_state_given_action(self, state, action):
         """ Given a state and an action, returns the new state """
         new_state = tuple(map(sum, zip(state, self.action_space[action]))) # new state given action
         ## Bump into wall or border
@@ -230,7 +231,10 @@ class GridWorldExamples(ABC):
         pass
 
 class RussellNorvigGridworld(GridWorldExamples):
-    '''Russell & Norvig Gridworld environment'''
+    '''
+    Russell & Norvig Gridworld environment
+    from Artificial Intelligence: A Modern Approach by S. Russell and P. Norvig
+    '''
     def __init__(self):
         super().__init__()
 
@@ -238,7 +242,8 @@ class RussellNorvigGridworld(GridWorldExamples):
         return MakeGrid(
             walls = [(1, 1)], 
             terminal_states = {(0, 3): 1, (1, 3): -10}, 
-            plot_name = 'RussellNorvig'
+            plot_name = 'RussellNorvig',
+            initial_state=(2, 0)
             )
 
 class gridwordB(GridWorldExamples):
@@ -280,4 +285,9 @@ class gridwordE(GridWorldExamples):
             walls=list(zip(rows, cols)),
             terminal_states={(5, 4): 10, (0, 9): -10},
         )
-
+"""
+class FrozenLake8x8(GridWorldExamples):
+    def gritword():
+        import gym
+        return gym.make("FrozenLake8x8-v1")
+"""
