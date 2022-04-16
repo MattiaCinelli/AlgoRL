@@ -113,16 +113,16 @@ class Bandits():
         self.bandit_df.loc['action_count', :] = .0
         self.bandit_df.loc['q_estimation', :] = .0 + self.initial
 
-    def plot_bandits (self):
+    def plot_bandits(self):
         df = pd.DataFrame(
             {name:np.random.normal(mu, sigma, size=1_000) 
             for name, mu, sigma in zip(self.bandit_name, self.q_mean, self.q_sd)})
-        plt.violinplot(dataset=df, showmeans=True)
-        plt.xlabel("Action")
-        plt.ylabel("Reward distribution")
-        plt.xticks(range(1, self.number_of_arms+1), self.bandit_name)
-        plt.savefig(Path(self.images_dir, f'{self.number_of_arms}-bandits.png'), dpi=300)
-        plt.close()
+        df = pd.melt(df, value_vars=self.bandit_name, value_name='value')
+        g = (
+            ggplot(df, aes(x='variable', y='value', fill='variable'))
+        ) + geom_violin(df) + labs(x='Actions', y='Reward distribution', color='Bandits'
+        ) + ggtitle(f"Distribution of {self.number_of_arms}-bandits") + scale_fill_brewer(type="qual", palette = "Pastel1")  #+ geom_jitter(stroke=0.05) 
+        g.save(Path(self.images_dir, f'{self.number_of_arms}-bandits.png'), dpi=300)
 
     def return_bandit_df(self) -> pd.DataFrame:
         return self.bandit_df
