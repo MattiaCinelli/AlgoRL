@@ -60,14 +60,27 @@ class TestAll(object):
         return self.df_return, self.df_action
 
     def _comparing_plots(self, arg0, arg1, pic_name):
-        arg0.plot.line(figsize=(10, 5))
-        plt.xlabel("Steps")
-        plt.ylabel(arg1)
-        plt.title(f"{pic_name}")
-        plt.legend(bbox_to_anchor=(1., .75))
-        plt.tight_layout() 
-        plt.savefig(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
-        plt.close()
+        '''Line charts in ggplot/plotnine'''
+        self.logger.info(f"Plotting {pic_name}")
+        # arg0.plot.line(figsize=(10, 5))
+        # plt.xlabel("Steps")
+        # plt.ylabel(arg1)
+        # plt.title(f"{pic_name}")
+        # plt.legend(bbox_to_anchor=(1., .75))
+        # plt.tight_layout()
+        # plt.savefig(Path(self.images_dir, f'{pic_name}_old.png'), dpi=300)
+        # plt.close()
+
+        arg0['time'] = range(self.time_steps)
+        df = pd.melt(arg0, value_vars=arg0.columns[:-1],  id_vars='time', value_name='value')
+        g = (
+            ggplot(df, aes(x='time', y='value', color='variable', group='variable'))
+        ) + geom_line(
+        ) + labs(x='Steps', y=arg1, color='Algorithms'#) + theme_classic(
+        ) + ggtitle(f"{pic_name}"
+        ) + scale_fill_brewer(type="qual", palette = "Pastel1") 
+        g.save(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
+
 
     def plot_action_taken(self, best_actions, pic_name:str = 'BestActions' ):
         self._comparing_plots(
@@ -118,10 +131,13 @@ class Bandits():
             {name:np.random.normal(mu, sigma, size=1_000) 
             for name, mu, sigma in zip(self.bandit_name, self.q_mean, self.q_sd)})
         df = pd.melt(df, value_vars=self.bandit_name, value_name='value')
+
         g = (
             ggplot(df, aes(x='variable', y='value', fill='variable'))
-        ) + geom_violin(df) + labs(x='Actions', y='Reward distribution', color='Bandits'
-        ) + ggtitle(f"Distribution of {self.number_of_arms}-bandits") + scale_fill_brewer(type="qual", palette = "Pastel1")  #+ geom_jitter(stroke=0.05) 
+        ) + geom_violin(df
+        ) + labs(x='Actions', y='Reward distribution', color='Actions'
+        ) + ggtitle(f"Distribution of {self.number_of_arms}-bandits"
+        ) + scale_fill_brewer(type="qual", palette = "Pastel1")
         g.save(Path(self.images_dir, f'{self.number_of_arms}-bandits.png'), dpi=300)
 
     def return_bandit_df(self) -> pd.DataFrame:
@@ -439,7 +455,8 @@ class BernoulliThompsonSampling(MABFunctions):
         self.bandits.bandit_df[action]['alpha'] += reward
         self.bandits.bandit_df[action]['beta'] += 1-reward
 
-        assert np.isclose(np.sum(self.bandits.bandit_df.loc['target', :]), 1.0), "The sum of all probabilities is not 1.0"
+        assert np.isclose(np.sum(self.bandits.bandit_df.loc['target', :]), 1.0), \
+        f"The sum of all probabilities is not 1.0 ({np.sum(self.bandits.bandit_df.loc['target', :])})"
         return reward
 
     def _act(self, _:int) -> str:        
