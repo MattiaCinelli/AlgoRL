@@ -287,7 +287,11 @@ class gridwordE(GridWorldExamples):
         )
 
 class gridwordF(GridWorldExamples):
-    '''Gridworld F: Rooms with corridor (Dong et al. 2005)'''
+    '''Gridworld F: Rooms with corridor (Dong et al. 2005)
+    Reference:
+    =================
+    - https://www.researchgate.net/figure/The-example-of-rooms-with-corridor-is-a-gridworld-environment-with-cell-to-cell-actions_fig1_334451575
+    '''
     def gridword():
         return MakeGrid(
             grid_row = 11, 
@@ -307,7 +311,11 @@ class gridwordF(GridWorldExamples):
             )
 
 class gridwordG(GridWorldExamples):
-    '''Gridworld G: Rooms without corridor (Sutton et al. 1998)'''
+    '''Gridworld G: Rooms without corridor (Sutton et al. 1998)
+    Reference:
+    =================
+    - https://www.researchgate.net/figure/The-rooms-example-is-a-gridworld-environment-with-stochastic-cell-to-cell-actions-and_fig1_221344978
+    '''
     def gridword():
         return MakeGrid(
             grid_row = 11, 
