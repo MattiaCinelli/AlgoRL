@@ -9,7 +9,7 @@ from algorl.logs import logging
 from algorl.src.grid_environment import *
 from algorl.src.DP import DP
 
-def test_DP(env, grid_name):
+def run_DP(env, grid_name):
     print(grid_name)
     model = DP(
         env=env
@@ -24,4 +24,4 @@ if __name__ == "__main__":
     logger = logging.getLogger("Main")
     logger.info("Running Main.py")
     for gridword in GridWorldExamples.__subclasses__():
-        test_DP(gridword.gridword(), grid_name = gridword.__name__)
+        run_DP(gridword.gridword(), grid_name = gridword.__name__)
