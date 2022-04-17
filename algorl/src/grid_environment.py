@@ -285,9 +285,60 @@ class gridwordE(GridWorldExamples):
             walls=list(zip(rows, cols)),
             terminal_states={(5, 4): 10, (0, 9): -10},
         )
-"""
-class FrozenLake8x8(GridWorldExamples):
-    def gritword():
-        import gym
-        return gym.make("FrozenLake8x8-v1")
-"""
+
+class gridwordF(GridWorldExamples):
+    '''Gridworld F: Rooms with corridor (Dong et al. 2005)
+    Reference:
+    =================
+    - https://www.researchgate.net/figure/The-example-of-rooms-with-corridor-is-a-gridworld-environment-with-cell-to-cell-actions_fig1_334451575
+    '''
+    def gridword():
+        return MakeGrid(
+            grid_row = 11, 
+            grid_col = 11, plot_name='table_F',
+            walls = [
+                (1, 1),(1, 2),(1, 3),(1, 4),(1, 5),(1, 6),(1, 7),(1, 8),(1, 9),
+                (2, 1),                     (2, 5),                     (2, 9),
+                                            (3, 5),                           
+                (4, 1),                     (4, 5),                     (4, 9),
+                (5, 1),(5, 2),(5, 3),(5, 4),(5, 5),(5, 6),(5, 7),(5, 8),(5, 9),
+                (6, 1),                     (6, 5),                     (6, 9),
+                                            (7, 5), 
+                (8, 1),                     (8, 5),                     (8, 9),
+                (9, 1),(9, 2),(9, 3),(9, 4),(9, 5),(9, 6),(9, 7),(9, 8),(9, 9),                          
+                ], 
+            terminal_states = {(3, 3): 1, (7, 7): 100}, 
+            )
+
+class gridwordG(GridWorldExamples):
+    '''Gridworld G: Rooms without corridor (Sutton et al. 1998)
+    Reference:
+    =================
+    - https://www.researchgate.net/figure/The-rooms-example-is-a-gridworld-environment-with-stochastic-cell-to-cell-actions-and_fig1_221344978
+    '''
+    def gridword():
+        return MakeGrid(
+            grid_row = 11, 
+            grid_col = 11, plot_name='table_G',
+            walls = [
+                                                   (0, 5),
+                                                   (1, 5),
+                                                   (2, 5),                    
+                                                                       
+                                                   (4, 5),                     
+                (5, 0),       (5, 2),(5, 3),(5, 4),(5, 5),
+                                                   (6, 5),(6, 6),(6, 7),     (6, 9),(6, 10),                   
+                                                   (7, 5), 
+                                                   (8, 5),                      
+                                                   
+                                                   (10,5)                        
+                ], 
+            terminal_states = {(6, 8): 1}, 
+            )
+
+# """
+# class FrozenLake8x8(GridWorldExamples):
+#     def gritword():
+#         import gym
+#         return gym.make("FrozenLake8x8-v1")
+# """

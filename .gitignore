@@ -32,3 +32,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 
+# outputs
+images
+
