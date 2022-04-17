@@ -33,5 +33,5 @@ share/python-wheels/
 *.egg
 
 # outputs
-images/*
+images
 
