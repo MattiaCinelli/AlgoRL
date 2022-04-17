@@ -85,7 +85,7 @@ class DP(object):
 
                 exploration.append(
                     sum(
-                        self.env.grid[self.env.new_state_given_action(state, move)]*possible_move.get(move)
+                        self.env.grid[self.env.next_state_given_action(state, move)]*possible_move.get(move)
                         for move in possible_move
                         )
                 )
