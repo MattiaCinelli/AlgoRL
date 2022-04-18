@@ -137,6 +137,7 @@ class Bandits():
         ) + geom_violin(df
         ) + labs(x='Actions', y='Reward distribution', color='Actions'
         ) + ggtitle(f"Distribution of {self.number_of_arms}-bandits"
+        ) + geom_sina(alpha=0.1, size=.3
         ) + scale_fill_brewer(type="qual", palette = "Pastel1")
         g.save(Path(self.images_dir, f'{self.number_of_arms}-bandits.png'), dpi=300)
 
