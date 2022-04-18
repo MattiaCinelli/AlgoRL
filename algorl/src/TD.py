@@ -90,7 +90,9 @@ class TemporalDifferenceFunctions(RLFunctions):
 class TabularTD0(TemporalDifferenceFunctions):
     '''
     Monte Carlo Prediction to estimate state-action values
-    Page 120 of Sutton and Barto.
+    Reference:
+    --------------------
+    - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 120.
 
     Input: the policy \pi to be evaluated
     Algorithm parameter: step size alpha element of (0, 1]
@@ -144,7 +146,9 @@ class TabularTD0(TemporalDifferenceFunctions):
 class Sarsa(TemporalDifferenceFunctions):
     '''
     Sarsa (on-policy TD control) for estimating Q=q*
-    Page 130 of Sutton and Barto.
+    Reference:
+    --------------------
+    - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 130
 
     Algorithm parameters: step size alpha element of (0, 1], small " > 0
     Initialize Q(s,a), for all s element of S+,a element of A(s), arbitrarily except that Q(terminal,·) = 0
@@ -188,7 +192,9 @@ class Sarsa(TemporalDifferenceFunctions):
 class QLearning(TemporalDifferenceFunctions):
     '''
     Q-learning for estimating pi=pi*
-    Page 131 of Sutton and Barto.
+    Reference:
+    --------------------
+    - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 131.
 
     Algorithm parameters: step size alpha element of (0, 1], small epsilon > 0
     Initialize Q(s,a), for all s element of S+,a element of A(s), arbitrarily except that Q(terminal,·) = 0
@@ -232,7 +238,9 @@ class QLearning(TemporalDifferenceFunctions):
 class NStepTD(TemporalDifferenceFunctions):
     '''
     n-step TD for estimating vi=vi*
-    Page 144 of Sutton and Barto.
+    Reference:
+    --------------------
+    - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 144.
     '''
     def __init__(
         self, env, alpha:float = 0.5, gamma:float = 0.9, starting_state:tuple=None,
@@ -295,4 +303,49 @@ class NStepTD(TemporalDifferenceFunctions):
                     self.logger.info(f'\tEpoch {epoch} done (r == (T - 1)')
                 t += 1
                 state = next_state
-        
+
+
+class DoubleQLearning(TemporalDifferenceFunctions):
+    '''
+    Double Q-learning for estimating pi=pi*
+    Reference:
+    --------------------
+    - Grokking Deep Reinforcement Learning by Miguel Morales. Page 193.
+
+    Algorithm parameters: step size alpha element of (0, 1], small epsilon > 0
+    Initialize Q(s,a), for all s element of S+,a element of A(s), arbitrarily except that Q(terminal,·) = 0
+
+    Loop for each episode: 
+        Initialize S
+        Loop for each step of episode:
+            Choose A' from S' using policy derived from Q (e.g., epsilon-greedy) 
+            Tale action A, observe R, S'
+            Q(S, A) <- Q(S, A) + alpha[R + gamma * max[Q(S', a)] - Q(S, A)]
+            S <- S'; A <- A';
+    until S is terminal
+    '''
+    def __init__(
+        self, env, alpha:float = 0.5, gamma:float = 0.9,  starting_state=(2,0), 
+        num_of_epochs:int = 1_000, num_episodes =10_000, epsilon = 0.1,
+        plot_name='Qlearning', reward = -1):
+        """
+        Initializes the grid world
+        - env: grid_environment: A tabular environment created by Make class
+        - discount_factor: float: discount factor
+        - num_of_epochs: int: number of epochs 
+        """
+        super().__init__()
+        self.num_of_epochs = num_of_epochs
+        self.gamma = gamma
+        self.alpha = alpha
+        self.env = env
+        self.starting_state = env.initial_state if starting_state is None else starting_state
+        self.plot_name = plot_name
+        self.epsilon = epsilon
+        self.reward = reward
+        self.num_episodes = num_episodes
+        self.logger.info('Q-Learning initialized')
+
+    def compute_state_value(self, plot_name='QLearning'):
+        self.logger.info('Compute Q-Learning')
+        self.td_control(algo = self.q_learning_formula, plot_name=plot_name)
