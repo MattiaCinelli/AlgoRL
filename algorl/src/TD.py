@@ -46,6 +46,15 @@ class TemporalDifferenceFunctions(RLFunctions):
                 (reward+ self.gamma * max_value - q_values_df.at[state, action])
         return q_values_df
 
+    def select_action(self, state, Q):
+        '''
+        Selects an action given a state
+        '''
+        if np.random.rand() < self.epsilon:
+            return self.get_random_action(state)
+        else:
+            return self.env.possible_actions[np.argmax(Q.loc[state, :])]
+
     def get_q_df(self):
         # Initialize Q(s,a)
         return pd.DataFrame( 0, columns=self.env.possible_actions, index=pd.MultiIndex.from_tuples(self.env.all_states), dtype=float)
@@ -313,20 +322,8 @@ class DoubleQLearning(TemporalDifferenceFunctions):
     Double Q-learning for estimating pi=pi*
     Reference:
     --------------------
-     - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 136.
+    - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 136.
     - Grokking Deep Reinforcement Learning by Miguel Morales. Page 193.
-
-    Algorithm parameters: step size alpha element of (0, 1], small epsilon > 0
-    Initialize Q(s,a), for all s element of S+,a element of A(s), arbitrarily except that Q(terminal,·) = 0
-
-    Loop for each episode: 
-        Initialize S
-        Loop for each step of episode:
-            Choose A' from S' using policy derived from Q (e.g., epsilon-greedy) 
-            Tale action A, observe R, S'
-            Q(S, A) <- Q(S, A) + alpha[R + gamma * max[Q(S', a)] - Q(S, A)]
-            S <- S'; A <- A';
-    until S is terminal
     '''
     def __init__(
         self, env, alpha:float = 0.5, gamma:float = 0.9,  starting_state=(2,0), 
@@ -350,14 +347,6 @@ class DoubleQLearning(TemporalDifferenceFunctions):
         self.num_episodes = num_episodes
         self.logger.info('Double Q-Learning initialized')
 
-    def select_action(self, state, Q):
-        '''
-        Selects an action given a state
-        '''
-        if np.random.rand() < self.epsilon:
-            return self.get_random_action(state)
-        else:
-            return self.env.possible_actions[np.argmax(Q.loc[state, :])]
 
     def compute_state_value(self, plot_name='DoubleQLearning'):
         self.logger.info('Compute Double Q-Learning')
@@ -414,3 +403,53 @@ class DoubleQLearning(TemporalDifferenceFunctions):
             self.logger.debug(f'num of steps: {num_of_steps}')
         # After all epochs are done, plot the results
         self.drew_policy((Q1 + Q2), plot_name=plot_name)
+
+
+class TabularDynaQ(TemporalDifferenceFunctions): #TODO
+    '''
+    Tabular Dyna-Q
+    Reference:
+    --------------------
+    - Reinforcement Learning: An Introduction. Sutton and Barto. 2nd Edition. Page 164.
+    - Grokking Deep Reinforcement Learning by Miguel Morales. Page 218.
+    '''
+    def __init__(
+        self, env, alpha:float = 0.5, gamma:float = 0.9,  starting_state=(2,0), 
+        num_of_epochs:int = 1_000, num_episodes =10_000, epsilon = 0.1,
+        plot_name='TabularDynaQ', reward = -1):
+        """
+        """
+        super().__init__()
+        self.num_of_epochs = num_of_epochs
+        self.gamma = gamma
+        self.alpha = alpha
+        self.env = env
+        self.starting_state = env.initial_state if starting_state is None else starting_state
+        self.plot_name = plot_name
+        self.epsilon = epsilon
+        self.reward = reward
+        self.num_episodes = num_episodes
+        self.logger.info('Tabular Dyna-Q initialized')
+
+    def compute_state_value(self, plot_name='TabularDynaQ'):
+        self.logger.info('Compute Tabular Dyna-Q')
+        # self.td_control(algo = self.q_learning_formula, plot_name=plot_name)
+        # Initialize Q(s,a)
+        Q = self.get_q_df()
+
+        # Loop for each episode:
+        for epoch in range(self.num_of_epochs):
+            if epoch % 100 == 0:
+                self.logger.info(f'\tEpoch {epoch}')
+
+            # Get first state and action for the episode
+            state = random.choice(self.env.available_states) if self.starting_state is None else self.starting_state
+            action = self.select_action(state, Q)
+
+            # Loop for each step of the episode:
+            num_of_steps = 0
+            while not self.env.is_terminal_state(state) and num_of_steps < self.num_episodes:
+                # Generate trajectory
+                next_state = self.env.next_state_given_action(state, action)
+                next_action = self.select_action(next_state, Q)
+                reward = self.env.grid[next_state]
