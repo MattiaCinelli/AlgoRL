@@ -6,7 +6,7 @@ from rich.logging import RichHandler
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                     datefmt='%d-%m-%Y %H:%M',
-                    filename='cov19tdm.log',
+                    filename='algorl_costume_algos.log',
                     filemode='w'
                     )
 
