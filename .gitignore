@@ -9,6 +9,8 @@
 .ipynb_checkpoints
 .vscode
 .valgorl
+.venv
+venv
 
 # Compiled python modules.
 *.pyc
