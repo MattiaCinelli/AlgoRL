@@ -18,6 +18,7 @@ def greedy_sample_averages():
     bandits = Bandits(number_of_arms = 5) 
     greedy = Greedy(bandits)
     greedy.simulate(time = 500)
+    bandits.plot_bandits()
     bandits.plot_true_mean_vs_estimation()
 
 def greedy_step_size():
@@ -90,11 +91,11 @@ def GBA_test():
     bandits.plot_true_mean_vs_estimation()
 
 if __name__ == "__main__":
-    # greedy_sample_averages_test()
-    # greedy_step_size_test()
+    greedy_sample_averages()
+    # greedy_step_size()
     # greedy_sample_averages_test_with_initials()
     # UCB_test()
     # BernoulliThompsonSampling_test()
     # GaussianThompsonSampling_test()
     # GBA_test()
-    main(arms=5, number_of_trials=50)
+    # main(arms=5, number_of_trials=50)
