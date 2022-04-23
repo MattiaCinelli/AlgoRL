@@ -6,15 +6,12 @@ from pathlib import Path
 # Third party libraries
 import numpy as np
 import pandas as pd
-from itertools import product
-import matplotlib.pyplot as plt
-from matplotlib.table import Table
 from typing import List, Dict, Tuple, Optional, Set
 
 # Local imports
 from ..logs import logging
 
-class DP():
+class DP(object):
     '''
     Policy Iteration (using iterative policy evaluation) for estimating pi = pi*
     Page 80 of Sutton and Barto.
@@ -27,29 +24,30 @@ class DP():
             Delta <- 0
             Loop for each s element of S:
                 v <- V(s)
-                $ V(s) <- sum_{s', r}p(s', r | s, pi(s))[r + gamma V(s')] $
+                V(s) <- sum{s', r}p(s', r| s, pi(s))[r + gamma*V(s')]
                 delta <- max(delta, |v delta V (s)|)
         until delta < theta (a small positive number determining the accuracy of estimation)
     3. Policy Improvement
         policy-stable true 
         For each s element of S:
             old-action <- pi(s)
-            $ pi(s) <- underset{a}{argmax} sum_{s', r}p(s', r | s, pi(s))[r + gamma V(s')]   $
+            pi(s) <- underset{a}{argmax} sum_{s', r} p(s', r | s, pi(s))[r + gamma V(s')]
             If old-action != pi(s), then policy-stable false
         If policy-stable, then stop and return V almost equal to v* and pi almost equal to pi*; else go to 2
     '''
     def __init__(
         self, env, step_cost:float = -1, gamma:float = 0.5, 
-        noise:float = .0, epsilon:float = 1e-4, plot_name:str = 'grid_world'
-        ):
+        noise:float = .0, epsilon:float = 1e-4
+        ) -> None:
         """
         Initializes the grid world
+        Args:
+        -------------------
         - env: grid_environment: A tabular environment created by MakeGrid class
         - step_cost: float: cost of moving in the environment
         - gamma: float: discount factor
         - noise: float: probability of taking a action that is not the one chosen
         - epsilon: float: threshold for convergence
-        - plot_name: str: name of the plot in output
         """
         # Agent position and reward set up
         self.step_cost = step_cost
@@ -57,12 +55,11 @@ class DP():
         self.epsilon = epsilon
         self.noise = noise
         self.env = env
-        self.plot_name = plot_name
 
         self.logger = logging.getLogger("DynamicsProgramming")
         self.logger.info("Running DP")
 
-    def prob_of_action(self, action:str):
+    def prob_of_action(self, action:str) -> Dict[str, float]:
         """
         Returns the probability of taking an action
         """
@@ -75,7 +72,10 @@ class DP():
             'R': {'R':correct, 'U':wrong, 'D':wrong},
             }[action]
 
-    def get_sweep(self):
+    def get_sweep(self) -> Tuple[np.ndarray, bool]:
+        '''
+        Returns the state value function and whether the policy is stable
+        '''
         new_grid = self.env.grid.copy()
         for state in self.env.available_states:
             exploration = []
@@ -85,7 +85,7 @@ class DP():
 
                 exploration.append(
                     sum(
-                        self.env.grid[self.env.new_state_given_action(state, move)]*possible_move.get(move)
+                        self.env.grid[self.env.next_state_given_action(state, move)]*possible_move.get(move)
                         for move in possible_move
                         )
                 )
@@ -102,15 +102,11 @@ class DP():
         else:
             return new_grid, False
 
-    
-    def compute_state_value(self):
+    def simulate(self) -> np.ndarray:
+        '''
+        Simulates the policy iteration algorithm
+        '''
         done = False
         while not done:
             self.env.grid, done = self.get_sweep()
         return self.env.grid
-
-    def draw_state_value(self):
-        self.env.draw_state_value(plot_name=self.plot_name)
-
-    def drew_policy(self):
-        self.env.drew_policy(plot_name=self.plot_name)

@@ -32,3 +32,11 @@ share/python-wheels/
 .installed.cfg
 *.egg
 
+# outputs
+images
+
+*.zip
+*.npz
+*.data*
+*.index*
+*.ipynb

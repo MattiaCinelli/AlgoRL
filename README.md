@@ -19,7 +19,8 @@ Help, in the form of reviews, contributions, bug-reporting is greatly encouraged
 
 Sources:
 - Primary source is the pseudo-code reported in [Reinforcement Learning: An Introduction](http://incompleteideas.net/book/the-book-2nd.html), 2nd edition
-by Richard S. Sutton and Andrew G. Barto". MIT Press, Cambridge, MA, 2018.
+by Richard S. Sutton and Andrew G. Barto. MIT Press, Cambridge, MA, 2018.
+- Grokking Deep Reinforcement Learning, by Miguel Morales. 2020
 <!-- Add badges from somewhere like: [shields.io](https://shields.io/) -->
 
 
