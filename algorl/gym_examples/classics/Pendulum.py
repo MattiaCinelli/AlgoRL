@@ -24,7 +24,6 @@
 
 # In[1]:
 
-
 # Standard Libraries
 import os
 from pathlib import Path
@@ -36,18 +35,17 @@ from stable_baselines3 import A2C, SAC, PPO, TD3
 from stable_baselines3.ppo.policies import MlpPolicy #  MlpPolicy because the observation of the CartPole task is a feature vector, not images.
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import DummyVecEnv
-from stable_baselines3.common.monitor import Monitor 
+from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_util import make_vec_env
 
 # Local imports
 from utils import file_exists, evaluate_model, eval_env_random_actions
+from logs import logging
 
-
-# ## Initialization
+logger = logging.getLogger("CartPole")
 
 # In[2]:
-
-
+# Initialization
 env_name = 'Pendulum-v0'
 # env = gym.make(env_name)
 env = make_vec_env(env_name, n_envs=4, seed=0)
@@ -59,18 +57,16 @@ Path(directory_path).mkdir(parents=True, exist_ok=True)
 
 # In[3]:
 
-print(env.action_space)
-print(env.observation_space)
+logger.info(env.action_space)
+logger.info(env.observation_space)
 
 # In[4]:
 eval_env_random_actions(env)
 
 
-# ## Create model
-
 # In[5]:
 
-
+# Create model
 model = SAC('MlpPolicy', env, train_freq=1, gradient_steps=2, verbose=0)
 evaluate_model(model, num_episodes=100)
 
@@ -85,13 +81,11 @@ model.learn(num_steps)
 # The minimum reward that can be obtained is -16.2736044, while the maximum reward is zero (pendulum is upright with zero velocity and no torque applied).
 
 mean_reward, std_reward = evaluate_policy(model, Monitor(env), n_eval_episodes=100)
-print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+logger.info(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
 
 ## Save 
 # In[7]:
-
-
-model_file_name = Path(directory_path, env_name + '_' + str(num_steps))
+model_file_name = Path(directory_path, f'{env_name}_{num_steps}')
 model.save(model_file_name)
 
 # In[8]:

@@ -15,13 +15,13 @@ from stable_baselines3.common.monitor import Monitor
 
 # Local imports
 from utils import file_exists, evaluate_model, eval_env_random_actions
+from logs import logging
 
+logger = logging.getLogger("CartPole")
 
-# # 1. Set up
+# 1. Set up
 
 # In[2]:
-
-
 # Create folder to save models
 directory_path = 'models'
 Path(directory_path).mkdir(parents=True, exist_ok=True)
@@ -32,15 +32,15 @@ env = gym.make(env_name)
 
 num_steps = 250_000
 model_file_name = Path(directory_path, f'{env_name}_{num_steps}')
-print(env.action_space)
+logger.info(env.action_space)
 # 0- Do nothing
 # 1- Fire left engine
 # 2- Fire down engine
 # 3- Fire right engine
-print(env.observation_space)
+logger.info(env.observation_space)
 
 
-# ## 1.1 Test random actions
+# 1.1 Test random actions
 
 # In[3]:
 
@@ -48,11 +48,9 @@ print(env.observation_space)
 eval_env_random_actions(env, render=False)
 
 
-# # 2. Build and Train a model
+# 2. Build and Train a model
 
 # In[4]:
-
-
 # Instantiate the agent
 env = gym.make(env_name)
 env = DummyVecEnv([lambda: env])
@@ -60,43 +58,30 @@ model = PPO('MlpPolicy', env, verbose=0) # CNNPolicy
 
 
 # In[5]:
-
-
 # Train the agent
 model.learn(total_timesteps = num_steps)
 # We want high explained_variance and 
 
-
-# # 3 Save and reload
-
 # In[6]:
-
-
+# # 3 Save and reload
 # Save the agent
 model.save(model_file_name)
 del model  # delete trained model to demonstrate loading
 
 
-# ## Load the trained agent
-
 # In[7]:
-
-
 # Load the trained agent
-# NOTE: if you have loading issue, you can pass `print_system_info=True`
+# NOTE: if you have loading issue, you can pass `logger.info_system_info=True`
 # to compare the system on which the model was trained vs the current one
-# model = DQN.load("dqn_lunar", env=env, print_system_info=True)
+# model = DQN.load("dqn_lunar", env=env, logger.info_system_info=True)
 model = PPO.load(model_file_name, env=env)
-
-
-# # 3. Evaluate
 
 # In[12]:
 
-
+# 3. Evaluate
 # Evaluate the agent
 mean_reward, std_reward = evaluate_policy(model,  env , n_eval_episodes=10)
-print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+logger.info(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
 
 
 # In[11]:

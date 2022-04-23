@@ -1,3 +1,4 @@
+# In[1]:
 # Standard Libraries
 import os
 from pathlib import Path
@@ -16,6 +17,7 @@ from utils import file_exists, eval_env_random_actions
 from logs import logging
 
 logger = logging.getLogger("CartPole")
+# In[2]:
 # Initialization
 env_name = 'CartPole-v1'
 
