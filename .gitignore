@@ -39,3 +39,4 @@ images
 *.npz
 *.data*
 *.index*
+.ipynb
