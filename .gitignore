@@ -35,3 +35,7 @@ share/python-wheels/
 # outputs
 images
 
+*.zip
+*.npz
+*.data*
+*.index*
