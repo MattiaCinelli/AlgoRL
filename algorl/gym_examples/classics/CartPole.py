@@ -23,7 +23,7 @@ env_name = 'CartPole-v1'
 directory_path = 'models'
 Path(directory_path).mkdir(parents=True, exist_ok=True)
 
-num_steps = 10#0_000
+num_steps = 100_000
 model_file_name = Path(directory_path, f'{env_name}_{num_steps}')
 
 env = gym.make(env_name)
