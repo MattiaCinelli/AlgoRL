@@ -10,6 +10,7 @@ from typing import List, Tuple
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm 
 from icecream import ic
+from plotnine import *
 
 # Local imports
 from ..logs import logging
@@ -59,14 +60,27 @@ class CompareAllBanditsAlgos(object):
         return self.df_return, self.df_action
 
     def _comparing_plots(self, arg0, arg1, pic_name):
-        arg0.plot.line(figsize=(10, 5))
-        plt.xlabel("Steps")
-        plt.ylabel(arg1)
-        plt.title(f"{pic_name}")
-        plt.legend(bbox_to_anchor=(1., .75))
-        plt.tight_layout() 
-        plt.savefig(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
-        plt.close()
+        '''Line charts in ggplot/plotnine'''
+        self.logger.info(f"Plotting {pic_name}")
+        # arg0.plot.line(figsize=(10, 5))
+        # plt.xlabel("Steps")
+        # plt.ylabel(arg1)
+        # plt.title(f"{pic_name}")
+        # plt.legend(bbox_to_anchor=(1., .75))
+        # plt.tight_layout()
+        # plt.savefig(Path(self.images_dir, f'{pic_name}_old.png'), dpi=300)
+        # plt.close()
+
+        arg0['time'] = range(self.time_steps)
+        df = pd.melt(arg0, value_vars=arg0.columns[:-1],  id_vars='time', value_name='value')
+        g = (
+            ggplot(df, aes(x='time', y='value', color='variable', group='variable'))
+        ) + geom_line(
+        ) + labs(x='Steps', y=arg1, color='Algorithms'#) + theme_classic(
+        ) + ggtitle(f"{pic_name}"
+        ) + scale_fill_brewer(type="qual", palette = "Pastel1") 
+        g.save(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
+
 
     def plot_action_taken(self, best_actions, pic_name:str = 'BestActions' ):
         self._comparing_plots(
@@ -112,16 +126,20 @@ class Bandits():
         self.bandit_df.loc['action_count', :] = .0
         self.bandit_df.loc['q_estimation', :] = .0 + self.initial
 
-    def plot_bandits (self):
+    def plot_bandits(self):
         df = pd.DataFrame(
             {name:np.random.normal(mu, sigma, size=1_000) 
             for name, mu, sigma in zip(self.bandit_name, self.q_mean, self.q_sd)})
-        plt.violinplot(dataset=df, showmeans=True)
-        plt.xlabel("Action")
-        plt.ylabel("Reward distribution")
-        plt.xticks(range(1, self.number_of_arms+1), self.bandit_name)
-        plt.savefig(Path(self.images_dir, f'{self.number_of_arms}-bandits.png'), dpi=300)
-        plt.close()
+        df = pd.melt(df, value_vars=self.bandit_name, value_name='value')
+
+        g = (
+            ggplot(df, aes(x='variable', y='value', fill='variable'))
+        ) + geom_violin(df
+        ) + labs(x='Actions', y='Reward distribution', color='Actions'
+        ) + ggtitle(f"Distribution of {self.number_of_arms}-bandits"
+        ) + geom_sina(alpha=0.1, size=.3
+        ) + scale_fill_brewer(type="qual", palette = "Pastel1")
+        g.save(Path(self.images_dir, f'{self.number_of_arms}-bandits.png'), dpi=300)
 
     def return_bandit_df(self) -> pd.DataFrame:
         return self.bandit_df
@@ -130,20 +148,20 @@ class Bandits():
         '''
         Scatter plot of true mean vs estimation
         '''
-        colours = cm.rainbow(np.linspace(0, 1, len(self.q_mean)))
-        _, ax = plt.subplots(figsize=(7, 5))
-        ax.scatter(self.q_mean, self.bandit_df.loc[y_axis, :], c=colours)
-        ax.set_xlabel("Target")
-        ax.set_ylabel("Estimation")
-        ax.set_title("Target vs estimated values")
-        # Add text labels
-        for i, txt in enumerate(self.bandit_name):
-            ax.annotate(txt, (self.q_mean[i], self.bandit_df.loc[y_axis, :][i]))
-        # Add diagonal line
-        ax.plot([min(self.q_mean), max(self.q_mean)], [min(self.q_mean), max(self.q_mean)], 'k--')
-        plt.savefig(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
-        plt.close()
-
+        g = (
+            ggplot(self.bandit_df.T, aes(x='target', y=y_axis, color=self.bandit_df.columns), 
+            )
+            + geom_point()
+            + labs(x='Target (True Mean)', y='Estimated Mean', color='Bandits')
+            + ggtitle(f"Target vs estimated values ({self.number_of_arms}-bandits)")
+        ) + geom_segment( # Add diagonal line
+            aes(x = min(self.q_mean), xend = max(self.q_mean),
+                y = min(self.q_mean), yend = max(self.q_mean),
+                ), color = 'black', linetype='dashed', alpha=.5
+        ) + geom_text(self.bandit_df.T, aes(x='target', y=y_axis, label=self.bandit_df.columns),
+            ha='left', nudge_x=0.05, color='black'
+        )
+        g.save(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
 
 class BernoulliBandits(Bandits):
     def __init__(
@@ -438,7 +456,8 @@ class BernoulliThompsonSampling(MABFunctions):
         self.bandits.bandit_df[action]['alpha'] += reward
         self.bandits.bandit_df[action]['beta'] += 1-reward
 
-        assert np.isclose(np.sum(self.bandits.bandit_df.loc['target', :]), 1.0), "The sum of all probabilities is not 1.0"
+        assert np.isclose(np.sum(self.bandits.bandit_df.loc['target', :]), 1.0), \
+        f"The sum of all probabilities is not 1.0 ({np.sum(self.bandits.bandit_df.loc['target', :])})"
         return reward
 
     def _act(self, _:int) -> str:        
