@@ -1,6 +1,8 @@
 """Simple script to run snips of code"""
 # Standard Libraries
+import os
 import sys
+os.chdir(os.path.dirname(__file__))
 
 # Third party libraries
 from icecream import ic

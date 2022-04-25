@@ -86,7 +86,7 @@ def show_videos(video_path='', prefix=''):
     :param prefix: (str) Filter the video, showing only the only starting with this prefix
     """
     html = []
-    for mp4 in Path(video_path).glob("{}*.mp4".format(prefix)):
+    for mp4 in Path(video_path).glob(f"{prefix}*.mp4"):
         video_b64 = base64.b64encode(mp4.read_bytes())
         html.append('''<video alt="{}" autoplay loop controls style="height: 400px;">
         <source src="data:video/mp4;base64,{}" type="video/mp4" />

@@ -64,7 +64,7 @@ class TemporalDifferenceFunctions(RLFunctions):
         q_values_df = self.get_q_df()
 
         # Initialize Q(s,a), for all s element of S+, a element of A(s), arbitrarily except that Q(terminal,·) = 0
-        state_action_pairs = {state:self.get_random_action() for state in self.env.all_states}
+        state_action_pairs = {state:self.get_random_action(state) for state in self.env.all_states}
         # Initialize actions using epsilon greedy and value state of the greed         
         for x, y in state_action_pairs.items():
             state_action_pairs[x] = self.epsilon_greedy(y)
@@ -82,7 +82,7 @@ class TemporalDifferenceFunctions(RLFunctions):
             num_of_steps = 0
             while not self.env.is_terminal_state(state) and num_of_steps < self.num_episodes:
                 # Generate trajectory
-                next_state = self.env.new_state_given_action(state, action)
+                next_state = self.env.next_state_given_action(state, action)
                 next_action = self.epsilon_greedy(state_action_pairs[next_state])
                 reward = self.env.grid[next_state]
 
@@ -145,8 +145,8 @@ class TabularTD0(TemporalDifferenceFunctions):
             state = self.starting_state
             done = False
             while not done:
-                action = self.get_random_action()
-                next_state = self.env.new_state_given_action(state, action)
+                action = self.get_random_action(state)
+                next_state = self.env.next_state_given_action(state, action)
                 self.logger.debug(f'state: {state}, action: {action}, new state: {next_state}')
                 # V[state] = V[state] + alphas * reward + gamma * V[next_state] * (not done) - V[state]
                 self.env.grid[state] = self.env.grid[state] +\
@@ -289,9 +289,9 @@ class NStepTD(TemporalDifferenceFunctions):
             done = False
             while not done:
                 if t < T:
-                    action = self.get_random_action()
+                    action = self.get_random_action(state)
                     self.logger.debug(f'State: {state}, Action: {action}')
-                    next_state = self.env.new_state_given_action(state, action)
+                    next_state = self.env.next_state_given_action(state, action)
                     self.logger.debug(f'Next State: {next_state}')
                     reward = self.env.grid[next_state] + self.step_cost 
                     states.append(state)
