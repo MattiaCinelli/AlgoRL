@@ -6,6 +6,7 @@
 *.txt
 *~
 *.csv
+!examples/data/*.csv
 .ipynb_checkpoints
 .vscode
 .valgorl

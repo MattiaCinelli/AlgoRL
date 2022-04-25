@@ -200,7 +200,7 @@ class MakeGrid():
             tb_policy.add_cell(i, j, self.width, self.height, text=arrows, loc='center', facecolor='white')
         return tb_policy
 
-    def step(self, action):
+    def next_state_given_action(self, state, action):
         """Given a state and an action, returns the new state
         to be compatible with:
          state, reward, done, info = env.step(action)
