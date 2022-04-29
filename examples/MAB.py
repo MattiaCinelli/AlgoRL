@@ -93,11 +93,11 @@ def GBA_test():
     bandits.plot_true_mean_vs_estimation()
 
 if __name__ == "__main__":
-    greedy_sample_averages()
+    # greedy_sample_averages()
     # greedy_step_size()
     # greedy_sample_averages_test_with_initials()
     # UCB_test()
     # BernoulliThompsonSampling_test()
     # GaussianThompsonSampling_test()
     # GBA_test()
-    # main(arms=5, number_of_trials=50)
+    main(arms=5, number_of_trials=50)

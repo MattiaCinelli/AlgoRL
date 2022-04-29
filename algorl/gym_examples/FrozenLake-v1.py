@@ -68,7 +68,7 @@ eval_env_random_actions(env, render=True, logger=logger)
 #     # prob, next_state, reward, done 
 # print(len(env.P[4][0]))
 # print(env.nS)
-env.
+print(env.ncol)
 # %%
 def value_iteration(env, max_iterations=1_000_000, lmbda=0.9):
     stateValue = [0 for _ in range(env.nS)]

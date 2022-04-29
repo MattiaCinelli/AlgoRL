@@ -21,7 +21,7 @@ class MakeGrid():
     def __init__(
         self, grid_row:int = 3, grid_col:int = 4, plot_name:str = 'grid_world',
         terminal_states:Dict = None, walls:List[Tuple] = None, initial_state:tuple = (0,0),
-        images_dir:str = 'images', some_value:float = 0.0,
+        images_dir:str = 'images', start_value:float = 0.0,
         ):
         """
         Initializes the grid world
@@ -34,7 +34,7 @@ class MakeGrid():
         - walls: list: list of tuples of walls. State the agent can't move to
         - initial_state: tuple: initial state, where the agent starts
         - images_dir: str: path to the directory where the images will be saved
-        - some_value: float: some value to initialize the grid
+        - start_value: float: some value to initialize the grid
         
         """
         if terminal_states is None:
@@ -43,7 +43,7 @@ class MakeGrid():
         # Initialize the grid environment
         self.grid_row = grid_row
         self.grid_col = grid_col
-        self.grid = np.zeros((self.grid_row, self.grid_col)) + some_value
+        self.grid = np.zeros((self.grid_row, self.grid_col)) + start_value
         self.plot_name = plot_name
         self.width = 1.0/self.grid_col
         self.height = 1.0/self.grid_row
