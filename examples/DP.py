@@ -1,13 +1,16 @@
-"""Simple script to run snips of code"""
 # Standard Libraries
+import os
 import numpy as np
 import pandas as pd
 # Third party libraries
 
 # Local imports
+os.chdir(os.path.dirname(__file__))
+
 from algorl.logs import logging
 from algorl.src.grid_environment import *
 from algorl.src.DP import DP
+
 
 def run_DP(env, grid_name):
     print(grid_name)

@@ -1,5 +1,7 @@
 """Simple script to run snips of code"""
 # Standard Libraries
+import os
+os.chdir(os.path.dirname(__file__))
 
 # Third party libraries
 import pandas as pd
@@ -9,6 +11,8 @@ import numpy as np
 from algorl.logs import logging
 from algorl.src.grid_environment import *
 from algorl.src.MC import MCPrediction, FirstVisitMCPredictions, MCExploringStarts
+
+logger = logging.getLogger(__name__)
 
 def run_MCPrediction(env):
     mc = MCPrediction(env)
@@ -29,4 +33,7 @@ def run_MCExploringStarts(env):
 if __name__ == "__main__":
     for gridword in GridWorldExamples.__subclasses__():
         run_MCPrediction(gridword.gridword())
+        run_FirstVisitMCPredictions(gridword.gridword())
+        run_MCExploringStarts(gridword.gridword())
+        sys.exit()
     

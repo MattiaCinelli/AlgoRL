@@ -1,5 +1,6 @@
 import numpy as np
 from pathlib import Path
+from logs import logging
 
 # check if file exists
 def file_exists(file_path):
@@ -10,7 +11,7 @@ def file_exists(file_path):
     """
     return Path(file_path).is_file()
 
-def eval_env_random_actions(env, episodes = 10, render = True):
+def eval_env_random_actions(env, episodes = 10, render = False, logger = None):
     all_rewards = []
     for episode in range(1, episodes):
         state = env.reset() # Restart the agent at the beginning
@@ -23,14 +24,14 @@ def eval_env_random_actions(env, episodes = 10, render = True):
             random_action = env.action_space.sample() # Do random actions
             state, reward, done, info = env.step(random_action) 
             score += reward
-        print('Episode: {}\n\tScore: {}'.format(episode, score))
+        logger.info('Episode: {}\tScore: {}'.format(episode, score))
         all_rewards.append(score)
     env.close()
-    print("\n\n\tMean reward:", np.mean(all_rewards), "Num episodes:", episodes)
+    logger.info(f"Mean reward:{np.mean(all_rewards)} Num episodes:{episodes}")
     return np.mean(all_rewards)
     
 
-def evaluate_model(model, num_episodes=100):
+def evaluate_model(model, num_episodes=100, logger=None):
     """
     Evaluate a RL agent
     :param model: (BaseRLModel object) the RL Agent
@@ -55,6 +56,6 @@ def evaluate_model(model, num_episodes=100):
         all_episode_rewards.append(sum(episode_rewards))
 
     mean_episode_reward = np.mean(all_episode_rewards)
-    print("Mean reward:", mean_episode_reward, "Num episodes:", num_episodes)
+    logger.info("Mean reward:", mean_episode_reward, "Num episodes:", num_episodes)
 
     return mean_episode_reward

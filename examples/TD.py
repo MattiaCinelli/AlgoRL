@@ -1,13 +1,17 @@
 """Simple script to run snips of code"""
 # Standard Libraries
-
+import os
+os.chdir(os.path.dirname(__file__))
 # Third party libraries
 
 # Local imports
 from algorl.logs import logging
 from algorl.src.grid_environment import *
-from algorl.src.TD import TabularTD0, Sarsa, QLearning
+from algorl.src.TD import TabularTD0, Sarsa, QLearning, DoubleQLearning
 from algorl.src.Nstep import NStepTD, NStepSARSA
+
+
+logger = logging.getLogger(__name__)
 
 def run_TabularTD0(env, grid_name):
     tdl = TabularTD0(env)
@@ -40,11 +44,15 @@ def run_NstepSARSA(env, grid_name, n_step):
     nstep_td.compute_state_value()
     env.drew_statevalue_and_policy(plot_title = f'{n_step}-stepSARSA_{grid_name}')
 
+def run_DQL(env, grid_name):
+    DoubleQLearning(env).compute_state_value(plot_name=f'dql_{grid_name}')
+
 if __name__ == "__main__":
     for gridword in GridWorldExamples.__subclasses__():
-        # run_TabularTD0(gridword.gridword(), grid_name = gridword.__name__)
-        # run_Sarsa(gridword.gridword(), grid_name = gridword.__name__)
-        # run_QLearning(gridword.gridword(), grid_name = gridword.__name__)
-        # run_NstepTDv2(gridword.gridword(), grid_name = gridword.__name__, n_steps=[2,3,4,5])
+        run_TabularTD0(gridword.gridword(), grid_name = gridword.__name__)
+        run_Sarsa(gridword.gridword(), grid_name = gridword.__name__)
+        run_QLearning(gridword.gridword(), grid_name = gridword.__name__)
+        run_DQL(gridword.gridword(), grid_name = gridword.__name__)
+        run_NstepTDv2(gridword.gridword(), grid_name = gridword.__name__, n_steps=[2,3,4,5])
         run_NstepSARSA(gridword.gridword(), grid_name = gridword.__name__, n_step=2)
         sys.exit()

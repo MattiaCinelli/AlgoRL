@@ -29,8 +29,8 @@ class MonteCarloFunctions(RLFunctions):
         '''Create the past S, R from starting state to the terminal state'''
         state_reward = []
         while not self.env.is_terminal_state(state):            
-            new_state = self.env.new_state_given_action(state, action)
-            reward = self.env.grid[self.env.new_state_given_action(state, action)] - 1
+            new_state = self.env.next_state_given_action(state, action)
+            reward = self.env.grid[self.env.next_state_given_action(state, action)] - 1
             state_reward.append((state, reward))
 
             state = new_state
@@ -42,13 +42,13 @@ class MonteCarloFunctions(RLFunctions):
         state_action_reward = []
         num_of_steps = 0
         while not self.env.is_terminal_state(state) and num_of_steps < self.max_step:
-            new_state = self.env.new_state_given_action(state, state_action[state])
+            new_state = self.env.next_state_given_action(state, state_action[state])
 
             if new_state == state:
                 # Add penalty for staying in the same state
-                reward = -5 + self.env.grid[self.env.new_state_given_action(state, state_action[state])]
+                reward = -5 + self.env.grid[self.env.next_state_given_action(state, state_action[state])]
             else:
-                reward = -1 + self.env.grid[self.env.new_state_given_action(state, state_action[state])]
+                reward = -1 + self.env.grid[self.env.next_state_given_action(state, state_action[state])]
             state_action_reward.append((state, state_action[state], reward))
 
             state = new_state
@@ -123,7 +123,7 @@ class MCPrediction(MonteCarloFunctions):
             # Compute random first state
             first_state = self.starting_state
             # Random  action for first state
-            first_action = self.get_random_action()
+            first_action = self.get_random_action(first_state)
             self.logger.debug(f'First state: {first_state}, action: {first_action}')
             # Compute all following states and actions
             state_reward_path = self.state_reward_path(first_state, first_action)
@@ -188,7 +188,7 @@ class FirstVisitMCPredictions(MonteCarloFunctions):
             # Compute random first state
             first_state = first_state = self.starting_state
             # Random  action for first state
-            first_action = self.get_random_action()
+            first_action = self.get_random_action(first_state)
             # Compute all following states and actions
             state_reward_path = self.state_reward_path(first_state, first_action)
 
@@ -241,7 +241,7 @@ class MCExploringStarts(MonteCarloFunctions):
     '''
     def __init__(
         self, env, discount_factor:float = 0.9, num_episodes:int = 100, starting_state:tuple=None,
-        num_of_epochs:int = 1_000, plot_name:str = 'MCExploringStarts'):
+        num_of_epochs:int = 1_000, max_step=100, plot_name:str = 'MCExploringStarts'):
         """
         Initializes the grid world
         - env: grid_environment: A tabular environment created by Make class
@@ -256,6 +256,7 @@ class MCExploringStarts(MonteCarloFunctions):
         self.num_of_epochs = num_of_epochs
         self.discount_factor = discount_factor
         self.plot_name = plot_name
+        self.max_step = max_step
         self.env = env
         self.starting_state = env.initial_state if starting_state is None else starting_state
 
@@ -270,7 +271,7 @@ class MCExploringStarts(MonteCarloFunctions):
             "states":state_list, 'actions':action_list, 'times':0, 'sum_value':0})
 
         state_action_initialized = {
-            state:self.get_random_action() for state in self.env.available_states}
+            state:self.get_random_action(state) for state in self.env.available_states}
         for epoch in range(self.num_of_epochs):
             if epoch % 100 == 0:
                 self.logger.info(f'Epoch {epoch}')
