@@ -3,6 +3,7 @@
 import re
 import sys
 from pathlib import Path
+from tkinter import Grid
 
 # Third party libraries
 import numpy as np
@@ -289,6 +290,22 @@ class gridwordE(GridWorldExamples):
             walls=list(zip(rows, cols)),
             terminal_states={(5, 4): 10, (0, 9): -10},
         )
+
+# Camerons attempt at making a gridworld
+
+class gridwordCam(GridWorldExamples):
+
+    def __init__(self):
+        super().__init__()
+   
+    def gridword():
+        return MakeGrid(
+            grid_row = 5, 
+            grid_col = 5, 
+            walls = [(1, 1),(1, 3), (3, 1), (3, 3)], 
+            plot_name='table_Cam',
+            terminal_states = {(4, 3): 1, (3,2): -10}
+            )
 
 class gridwordF(GridWorldExamples):
     '''Gridworld F: Rooms with corridor (Dong et al. 2005)
