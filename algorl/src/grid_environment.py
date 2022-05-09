@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 # Third party libraries
+import gym
 import numpy as np
 import pandas as pd
 from itertools import product
@@ -222,7 +223,61 @@ class MakeGrid():
         return state in self.terminal_states_list
 
 
+class MakeGymGrid(MakeGrid):
+    ''''''
+    def __init__(self, env:gym.Env) -> None:
+        super().__init__()
+        self.env = env
+        self.width = 1.0/self.env.ncol
+        self.height = 1.0/self.env.nrow
+        self.grid = np.zeros((self.env.nrow, self.env.ncol))
 
+    def get_env(self) -> gym.Env:
+        return self.env
+
+    def __features_sub_method(self, tb_env_features, i, j, val):
+        if val=='S':
+            tb_env_features.add_cell(i, j, self.width, self.height, text=val, loc='center', facecolor='yellow')
+        elif val=='F':
+            tb_env_features.add_cell(i, j, self.width, self.height, text=val, loc='center', facecolor='aliceblue')
+        elif val=='H':
+            tb_env_features.add_cell(i, j, self.width, self.height, text=val, loc='center', facecolor='tomato')
+        elif val=='G':
+            tb_env_features.add_cell(i, j, self.width, self.height, text=val, loc='center', facecolor='lightgreen')
+        return tb_env_features
+
+    def drew_tabular_environment(self, plot_title = 'Dynamic_Programming'):
+        fig, (env_features, st_value, policy) = plt.subplots(1, 3, figsize=(16, 5))
+        fig.suptitle(f'{plot_title}')
+
+        env_features.set_title('Environment Features')
+        st_value.set_title('State values')
+        policy.set_title('Best Policy')
+        
+        env_features.set_axis_off()
+        st_value.set_axis_off()
+        policy.set_axis_off()
+        
+        tb_env_features = Table(env_features, bbox=[0, 0, 1, 1])
+        tb_st_value = Table(st_value, bbox=[0, 0, 1, 1])
+        tb_policy = Table(policy, bbox=[0, 0, 1, 1])
+
+        # Add cells
+        for (i, j), val in np.ndenumerate(self.grid):
+            # State value
+            tb_env_features = self.__features_sub_method(tb_env_features, i, j, str(self.env.desc[i][j],'utf-8'))
+            
+            # State value
+            # tb_st_value = self.__state_value_sub_method(tb_st_value, i, j, np.round(val, 2))
+
+            # Policy
+            # tb_policy = self.__state_value_sub_policy(tb_policy, i, j, np.round(val, 2))
+
+        self._drew_grid(tb_env_features, env_features)
+        self._drew_grid(tb_st_value, st_value)
+        self._drew_grid(tb_policy, policy)
+        
+        plt.savefig(Path(self.images_dir, f'{plot_title}_{self.plot_name}_ST_and_policy.png'), dpi=300)  
 
 #############
 # Examples 

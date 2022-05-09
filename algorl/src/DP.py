@@ -6,7 +6,12 @@ from pathlib import Path
 # Third party libraries
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Tuple, Optional, Set
+from typing import Dict, Tuple
+from icecream import ic
+
+import gym
+import numpy as np
+from .grid_environment import MakeGymGrid
 
 # Local imports
 from ..logs import logging
@@ -110,3 +115,124 @@ class DP(object):
         while not done:
             self.env.grid, done = self.get_sweep()
         return self.env.grid
+
+
+class DPv2(object):
+    '''
+    Policy Iteration (using iterative policy evaluation) for estimating pi = pi*
+    Page 80 of Sutton and Barto.
+    As for class DP, but with implementation suitable for gym grid environments
+    '''
+    def __init__(
+        self, env:gym.Env, gym_env_name:str, step_cost:float = -1, gamma:float = 0.5, 
+        noise:float = .0, epsilon:float = 1e-4
+        ) -> None:
+        """
+        Initializes the grid world
+        Args:
+        -------------------
+        - env: grid_environment: A tabular environment created by MakeGrid class
+        - step_cost: float: cost of moving in the environment
+        - gamma: float: discount factor
+        - noise: float: probability of taking a action that is not the one chosen
+        - epsilon: float: threshold for convergence
+        """
+        self.logger = logging.getLogger("DP Gym env")
+        self.logger.info("Running DPv2")
+        
+        # Agent position and reward set up
+        self.gym_env_name = gym_env_name
+        self.step_cost = step_cost
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.noise = noise
+        mgg = MakeGymGrid(env)
+        self.env = mgg.get_env()
+        ic(self.env.desc)
+        mgg.drew_tabular_environment()
+
+
+    # def clear():
+    #     _ = system('cls') if name == 'nt' else system('clear') 
+
+    # def act(self, env, gamma, policy, state, v):
+    #     for action, action_prob in enumerate(policy[state]):            
+    #         for state_prob, next_state, reward, end in env.P[state][action]:                                
+    #             v += action_prob * state_prob * (reward + gamma * self[next_state])
+    #             self[state] = v
+                
+    # def evaluate(self, action_values, env, gamma, state):
+    #     for action in range(env.nA):
+    #         for prob, next_state, reward, terminated in env.P[state][action]:
+    #             action_values[action] += prob * (reward + gamma * self[next_state])
+    #     return action_values
+
+    # def lookahead(self, env, state, V, gamma):
+    #     action_values = np.zeros(env.nA)
+    #     return self.evaluate(V, action_values, env, gamma, state)
+
+    # def improve_policy(self, env, gamma=1.0, terms=1e9):    
+    #     policy = np.ones([env.nS, env.nA]) / env.nA
+    #     evals = 1
+    #     for _ in range(int(terms)):
+    #         stable = True
+    #         V = self.eval_policy(policy, env, gamma=gamma)
+    #         for state in range(env.nS):
+    #             current_action = np.argmax(policy[state])
+    #             action_value = self.lookahead(env, state, V, gamma)
+    #             best_action = np.argmax(action_value)
+    #             if current_action != best_action:
+    #                 stable = False                
+    #                 policy[state] = np.eye(env.nA)[best_action]
+    #             evals += 1                
+    #             if stable:
+    #                 return policy, V
+
+    # def eval_policy(self, policy, env, gamma=1.0, theta=1e-5, terms=1e9):     
+    #     V = np.zeros(env.nS)
+    #     delta = 0
+    #     for _ in range(int(terms)):
+    #         for state in range(env.nS):            
+    #             self.act(V, env, gamma, policy, state, v=0.0)
+    #         self.clear()
+    #         print(V)
+    #         time.sleep(1)
+    #         v = np.sum(V)
+    #         if v - delta < theta:
+    #             return V
+    #         else:
+    #             delta = v
+    #     return V
+
+    # def value_iteration(self, env, gamma=1.0, theta=1e-9, terms=1e9):
+    #     V = np.zeros(env.nS)
+    #     for _ in range(int(terms)):
+    #         delta = 0
+    #         for state in range(env.nS):
+    #             action_value = self.lookahead(env, state, V, gamma)
+    #             best_action_value = np.max(action_value)
+    #             delta = max(delta, np.abs(V[state] - best_action_value))
+    #             V[state] = best_action_value
+    #         if delta < theta: break
+    #     policy = np.zeros([env.nS, env.nA])
+    #     for state in range(env.nS):
+    #         action_value = self.lookahead(env, state, V, gamma)
+    #         best_action = np.argmax(action_value)
+    #         policy[state, best_action] = 1.0
+    #     return policy, V
+
+    # def play(self, env, episodes, policy):
+    #     wins = 0
+    #     total_reward = 0
+    #     for _ in range(episodes):
+    #         term = False
+    #         state = env.reset()
+    #         while not term:
+    #             action = np.argmax(policy[state])
+    #             next_state, reward, term, info = env.step(action)
+    #             total_reward += reward
+    #             state = next_state
+    #             if term and reward == 1.0:
+    #                 wins += 1
+    #     average_reward = total_reward / episodes
+    #     return wins, total_reward, average_reward
