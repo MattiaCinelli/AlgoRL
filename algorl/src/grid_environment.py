@@ -1,5 +1,6 @@
 """Simple script to run snips of code"""
 # Standard Libraries
+from mimetypes import init
 import re
 import sys
 from pathlib import Path
@@ -292,8 +293,7 @@ class gridwordE(GridWorldExamples):
         )
 
 # Camerons attempt at making a gridworld
-
-class gridwordCam(GridWorldExamples):
+class gridworldCam(GridWorldExamples):
 
     def __init__(self):
         super().__init__()
@@ -302,10 +302,26 @@ class gridwordCam(GridWorldExamples):
         return MakeGrid(
             grid_row = 5, 
             grid_col = 5, 
-            walls = [(1, 1),(1, 3), (3, 1), (3, 3)], 
-            plot_name='table_Cam',
-            terminal_states = {(4, 3): 1, (3,2): -10}
+            walls = [(1, 1), (1, 3), (3, 1), (3, 3)], 
+            plot_name = 'table_Cam',
+            terminal_states = {(4, 2): 1, (3,2): -10}
             )
+
+# Camerons attempt at making another more complex world
+class gridworldCam2(GridWorldExamples):
+
+    def __init__(self):
+        super().__init__
+    
+    def gridword():
+        return MakeGrid(
+            grid_row=7,
+            grid_col=7,
+            walls=[(1, 1), (1, 3), (1, 5), (3, 1), (3, 3), (3, 5),
+            (5, 1), (5, 3), (5,5)],
+            plot_name='table_cam2',
+            terminal_states={(2, 2): -10, (2, 5): -10, (6, 2): -10, (4, 4): 10}
+        )
 
 class gridwordF(GridWorldExamples):
     '''Gridworld F: Rooms with corridor (Dong et al. 2005)
