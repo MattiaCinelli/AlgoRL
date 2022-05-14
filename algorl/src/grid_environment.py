@@ -132,10 +132,10 @@ class MakeGrid():
         # Add cells
         for (i, j), val in np.ndenumerate(self.grid):
             # State value
-            tb_st_value = self.__state_value_sub_method(tb_st_value, i, j, np.round(val, 2))
+            tb_st_value = self._state_value_sub_method(tb_st_value, i, j, np.round(val, 2))
 
             # Policy
-            tb_policy = self.__state_value_sub_policy(tb_policy, i, j, np.round(val, 2))
+            tb_policy = self._state_value_sub_policy(tb_policy, i, j, np.round(val, 2))
 
         self._drew_grid(tb_st_value, st_value)
         self._drew_grid(tb_policy, policy)
@@ -149,7 +149,7 @@ class MakeGrid():
         tb = Table(ax, bbox=[0, 0, 1, 1])
         # Add cells
         for (i, j), val in np.ndenumerate(self.grid):
-            tb = self.__state_value_sub_method(tb, i, j, val)
+            tb = self._state_value_sub_method(tb, i, j, val)
 
         self._drew_grid(tb, ax)
         plt.savefig(Path(self.images_dir, f'{self.plot_name}_state_values.png'), dpi=300)
@@ -162,11 +162,11 @@ class MakeGrid():
 
         # Add cells
         for (i, j), val in np.ndenumerate(self.grid):
-            tb = self.__state_value_sub_policy(tb, i, j, val)
+            tb = self._state_value_sub_policy(tb, i, j, val)
         self._drew_grid(tb, ax)
         plt.savefig(Path(self.images_dir, f'{self.plot_name}_policy.png'), dpi=300)
 
-    def __state_value_sub_method(self, tb_st_value, i, j, val):
+    def _state_value_sub_method(self, tb_st_value, i, j, val):
         if np.isnan(val):
             tb_st_value.add_cell(i, j, self.width, self.height, loc='center', facecolor='dimgray')
         elif (i, j) in self.terminal_states_list:
@@ -178,7 +178,7 @@ class MakeGrid():
             tb_st_value.add_cell(i, j, self.width, self.height, text=np.round(val, 2), loc='center', facecolor='white')
         return tb_st_value
 
-    def __state_value_sub_policy(self, tb_policy, i, j, val):
+    def _state_value_sub_policy(self, tb_policy, i, j, val):
         exploration = [
             self.grid[self.next_state_given_action((i, j), action)]
             for action in self.possible_actions
@@ -228,12 +228,16 @@ class MakeGymGrid(MakeGrid):
     def __init__(self, env:gym.Env) -> None:
         super().__init__()
         self.env = env
+        self.grid_row = env.nrow
+        self.grid_col = env.ncol
+        self.grid = np.zeros((self.grid_row, self.grid_col))
         self.width = 1.0/self.env.ncol
         self.height = 1.0/self.env.nrow
-        self.grid = np.zeros((self.env.nrow, self.env.ncol))
+        self.sweep_count = 0
+        self.initial_state = (0, 0)
 
     def get_env(self) -> gym.Env:
-        return self.env
+        return self.grid
 
     def __features_sub_method(self, tb_env_features, i, j, val):
         if val=='S':
@@ -268,16 +272,17 @@ class MakeGymGrid(MakeGrid):
             tb_env_features = self.__features_sub_method(tb_env_features, i, j, str(self.env.desc[i][j],'utf-8'))
             
             # State value
-            # tb_st_value = self.__state_value_sub_method(tb_st_value, i, j, np.round(val, 2))
+            tb_st_value = self._state_value_sub_method(tb_st_value, i, j, np.round(val, 2))
 
             # Policy
-            # tb_policy = self.__state_value_sub_policy(tb_policy, i, j, np.round(val, 2))
+            tb_policy = self._state_value_sub_policy(tb_policy, i, j, np.round(val, 2))
 
         self._drew_grid(tb_env_features, env_features)
         self._drew_grid(tb_st_value, st_value)
         self._drew_grid(tb_policy, policy)
         
         plt.savefig(Path(self.images_dir, f'{plot_title}_{self.plot_name}_ST_and_policy.png'), dpi=300)  
+
 
 #############
 # Examples 

@@ -99,7 +99,7 @@ class DP(object):
 
             new_grid[state] = self.step_cost + self.gamma*\
                 option_results[option_results.idxmax(axis=1)[0]][0]
-
+        self.sweep_cp
         if np.array_equal(new_grid, self.env.grid):
             return new_grid, True
         elif np.nansum(np.abs(new_grid - self.env.grid)) < self.epsilon :
@@ -117,15 +117,15 @@ class DP(object):
         return self.env.grid
 
 
-class DPv2(object):
+class DPv2(DP):
     '''
     Policy Iteration (using iterative policy evaluation) for estimating pi = pi*
     Page 80 of Sutton and Barto.
     As for class DP, but with implementation suitable for gym grid environments
     '''
     def __init__(
-        self, env:gym.Env, gym_env_name:str, step_cost:float = -1, gamma:float = 0.5, 
-        noise:float = .0, epsilon:float = 1e-4
+        self, env:gym.Env, gym_env_name:str,terminal_states, step_cost:float = -0.1, gamma:float = 0.9, 
+        noise:float = 2/3, epsilon:float = 1e-4
         ) -> None:
         """
         Initializes the grid world
@@ -137,6 +137,10 @@ class DPv2(object):
         - noise: float: probability of taking a action that is not the one chosen
         - epsilon: float: threshold for convergence
         """
+        super().__init__()
+
+        self.env = env
+        
         self.logger = logging.getLogger("DP Gym env")
         self.logger.info("Running DPv2")
         
@@ -146,10 +150,61 @@ class DPv2(object):
         self.gamma = gamma
         self.epsilon = epsilon
         self.noise = noise
-        mgg = MakeGymGrid(env)
-        self.env = mgg.get_env()
-        ic(self.env.desc)
-        mgg.drew_tabular_environment()
+        
+
+    # def prob_of_action(self, action:str) -> Dict[str, float]:
+    #     """
+    #     Returns the probability of taking an action
+    #     """
+    #     correct = 1 - self.noise
+    #     wrong = self.noise/2
+    #     return {
+    #         'U': {'U':correct, 'L':wrong, 'R':wrong}, 
+    #         'D': {'D':correct, 'L':wrong, 'R':wrong},
+    #         'L': {'L':correct, 'U':wrong, 'D':wrong},
+    #         'R': {'R':correct, 'U':wrong, 'D':wrong},
+    #         }[action]
+
+    # def get_sweep(self) -> Tuple[np.ndarray, bool]:
+    #     '''
+    #     Returns the state value function and whether the policy is stable
+    #     '''
+    #     new_grid = self.env.grid.copy()
+    #     for state in self.env.available_states:
+    #         exploration = []
+            
+    #         for action in self.env.possible_actions:
+    #             possible_move = self.prob_of_action(action)
+
+    #             exploration.append(
+    #                 sum(
+    #                     self.env.grid[self.env.next_state_given_action(state, move)]*possible_move.get(move)
+    #                     for move in possible_move
+    #                     )
+    #             )
+
+    #         option_results = pd.DataFrame([exploration], columns=self.env.possible_actions)
+
+    #         new_grid[state] = self.step_cost + self.gamma*\
+    #             option_results[option_results.idxmax(axis=1)[0]][0]
+        
+    #     self.env.sweep_count +=1
+    #     if np.array_equal(new_grid, self.env.grid):
+    #         return new_grid, True
+    #     elif np.nansum(np.abs(new_grid - self.env.grid)) < self.epsilon :
+    #         return new_grid, True
+    #     else:
+    #         return new_grid, False
+
+    # def simulate(self) -> np.ndarray:
+    #     '''
+    #     Simulates the policy iteration algorithm
+    #     '''
+    #     done = False
+    #     while not done:
+    #         print(self.env.sweep_count)
+    #         self.env.grid, done = self.get_sweep()
+    #     return self.env.grid
 
 
     # def clear():

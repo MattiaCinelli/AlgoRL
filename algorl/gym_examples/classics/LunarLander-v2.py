@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
+# %%
 import gym
 from pathlib import Path
 
@@ -17,9 +15,7 @@ from stable_baselines3.common.monitor import Monitor
 from utils import file_exists, evaluate_model, eval_env_random_actions
 from logs import logging
 
-logger = logging.getLogger("CartPole")
-
-# 1. Set up
+logger = logging.getLogger("'LunarLander-v2")
 
 # In[2]:
 # Create folder to save models

@@ -10,7 +10,7 @@ from icecream import ic
 # os.chdir(os.path.dirname(__file__))
 
 from algorl.logs import logging
-# from algorl.src.grid_environment import *
+from algorl.src.grid_environment import *
 from algorl.src.DP import DP, DPv2
 
 
@@ -36,16 +36,30 @@ if __name__ == "__main__":
     logger.info("Running Main.py")
     for gym_env_name in ['FrozenLake-v1']:
         env = gym.make(gym_env_name)
-        # model = DPv2(env=env, gym_env_name=gym_env_name)
-        ic(np.ones([env.nS, env.nA]) / env.nA)
-        env.reset()
-        ic(env.step(0))
-        ic(env.step(1))
-        ic(env.step(2))
-        ic(env.step(3))
+
+        # print(pd.DataFrame(env.desc))
+        # sys.exit()
+        terminal_states = {}
+        for (i, j), _ in np.ndenumerate(np.zeros((env.nrow, env.ncol))):
+            if str(env.desc[i][j], 'utf-8')=='H':
+                terminal_states[(i, j)] = -1
+            elif str(env.desc[i][j], 'utf-8')=='G':
+                terminal_states[(i, j)] = 1
+
+        make_gym_env = MakeGymGrid(env)
+        model = DPv2(env=make_gym_env, gym_env_name=gym_env_name, terminal_states=terminal_states)
+        model.simulate()
+        make_gym_env.drew_tabular_environment()
+        # ic(np.ones([env.nS, env.nA]) / env.nA)
+        # env.reset()
+        # ic(env.step(0))
+        # ic(env.step(1))
+        # ic(env.step(2))
+        # ic(env.step(3))
         # env.render()
         # ic(env.action_space)
         # ic(env.observation_space)
+        # ic(env.P)
         # ic(env.P.keys())
         # ic(env.ncol)
         # ic(env.nrow)
