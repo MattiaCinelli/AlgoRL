@@ -49,7 +49,7 @@ class CompareAllBanditsAlgos(object):
             bandits = Bandits(number_of_arms = self.arms)
             #2 Simulate
             explore = algo(bandits)
-            reward, best_action =  explore.simulate(time = self.time_steps)
+            reward, best_action = explore.simulate(time = self.time_steps)
             rewards.append(np.cumsum(reward))
             best_actions.append(best_action)
             bandits.reset_bandit_df()

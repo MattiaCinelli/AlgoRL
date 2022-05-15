@@ -28,12 +28,13 @@ class GreedySampleAverages(MABExamples):
 
     def mab(self, bandits, pic_name, times):
         greedy = Greedy(bandits)
-        greedy.simulate(time = times)
-        
+        tot_return, best_action_percentage = greedy.simulate(time = times)
         bandits.plot_true_mean_vs_estimation(pic_name)
-        print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
+        regret = greedy.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return)
+        ic(regret)
+        # print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
 
-
+# """
 class GreedyStepSize(MABExamples):
     '''
     Test the greedy algorithm with sample_averages
@@ -43,9 +44,10 @@ class GreedyStepSize(MABExamples):
 
     def mab(self, bandits, pic_name, times):
         greedy = Greedy(bandits, sample_averages=False, step_size=0.1)
-        greedy.simulate(time = times)
+        tot_return, best_action_percentage = greedy.simulate(time = times)
         bandits.plot_true_mean_vs_estimation(pic_name)
-        print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
+        # print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
+        ic(greedy.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return))
 
 
 class greedy_sample_averages_with_initials(MABExamples):
@@ -57,9 +59,10 @@ class greedy_sample_averages_with_initials(MABExamples):
 
     def mab(self, bandits, pic_name, times):
         greedy = Greedy(bandits, )
-        greedy.simulate(time = times)
+        tot_return, best_action_percentage = greedy.simulate(time = times)
         bandits.plot_true_mean_vs_estimation(pic_name)
-        print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
+        # print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
+        ic(greedy.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return))
 
 
 class UCBRun(MABExamples):
@@ -68,9 +71,10 @@ class UCBRun(MABExamples):
 
     def mab(self, bandits, pic_name, times):
         ucb = UCB(bandits)
-        ucb.simulate(time = times)
+        tot_return, best_action_percentage = ucb.simulate(time = times)
         bandits.plot_true_mean_vs_estimation(pic_name)
-        print((ucb.bandits.bandit_df.loc['action_count', :]*ucb.bandits.bandit_df.loc['q_estimation', :]).sum())
+        # print((ucb.bandits.bandit_df.loc['action_count', :]*ucb.bandits.bandit_df.loc['q_estimation', :]).sum())
+        ic(ucb.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return))
 
 
 class GaussianThompsonSamplingRun(MABExamples):
@@ -79,10 +83,10 @@ class GaussianThompsonSamplingRun(MABExamples):
 
     def mab(self, bandits, pic_name, times):
         gts = GaussianThompsonSampling(bandits=bandits)
-        gts.simulate(time=times)    
+        tot_return, best_action_percentage = gts.simulate(time=times)    
         bandits.plot_true_mean_vs_estimation(pic_name)
-        print(gts.bandits.bandit_df)
-        print((gts.bandits.bandit_df.loc['action_count', :]*gts.bandits.bandit_df.loc['q_estimation', :]).sum())
+        # print((gts.bandits.bandit_df.loc['action_count', :]*gts.bandits.bandit_df.loc['q_estimation', :]).sum())
+        ic(gts.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return))
 
 
 class GBARun(MABExamples):
@@ -91,10 +95,11 @@ class GBARun(MABExamples):
 
     def mab(self, bandits, pic_name, times):
         gba = GBA(bandits)
-        gba.simulate(time = times)
+        tot_return, best_action_percentage = gba.simulate(time = times)
         bandits.plot_true_mean_vs_estimation(pic_name)
-        print((gba.bandits.bandit_df.loc['action_count', :]*gba.bandits.bandit_df.loc['q_estimation', :]).sum())
-
+        # print((gba.bandits.bandit_df.loc['action_count', :]*gba.bandits.bandit_df.loc['q_estimation', :]).sum())
+        ic(gba.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return))
+# """
 """
 class BernoulliThompsonSamplingRun(MABExamples):
     def __init__(self):
