@@ -20,9 +20,24 @@ class MABExamples(ABC):
     def mab():
         pass
 
+class OnlyExploitationRun(MABExamples):
+    def __init__(self):
+        super().__init__()
+
+    def mab(self, bandits, pic_name, times):
+        best_action_percentages = []
+        for num in range(150):
+            print(num)
+            oe = OnlyExploitation(bandits)
+            tot_return, best_action_percentage = oe.simulate(time = times)
+            # bandits.plot_true_mean_vs_estimation(pic_name)
+            # regret = oe.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return)
+            best_action_percentages.append(best_action_percentage)
+        # print(best_action_percentage)
+        print(np.mean([best_action_percentages], axis=1)[0])
+"""
 class GreedySampleAverages(MABExamples):
-    '''
-    '''
+    ''' Test the greedy algorithm with sample_averages '''
     def __init__(self):
         super().__init__()
 
@@ -34,11 +49,9 @@ class GreedySampleAverages(MABExamples):
         ic(regret)
         # print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
 
-# """
+
 class GreedyStepSize(MABExamples):
-    '''
-    Test the greedy algorithm with sample_averages
-    '''
+    ''' Test the greedy algorithm with step_size '''
     def __init__(self):
         super().__init__()
 
@@ -50,15 +63,15 @@ class GreedyStepSize(MABExamples):
         ic(greedy.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return))
 
 
-class greedy_sample_averages_with_initials(MABExamples):
+class GreedySampleAveragesWithInitials(MABExamples):
     '''
-    Test the greedy algorithm with sample_averages
+    Test the greedy algorithm with optimistic initial values
     '''
     def __init__(self):
         super().__init__()
 
     def mab(self, bandits, pic_name, times):
-        greedy = Greedy(bandits, )
+        greedy = Greedy(bandits, sample_averages=True, initial_values=10)
         tot_return, best_action_percentage = greedy.simulate(time = times)
         bandits.plot_true_mean_vs_estimation(pic_name)
         # print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
@@ -122,26 +135,31 @@ class BernoulliThompsonSamplingRun(MABExamples):
             'BernTS':BernTS_actions, 'BernGreedy':BernGreedy_actions}))
 # """
 
-def main(arms=5, number_of_trials=5):
+def main(arms=5, number_of_trials=5, time_steps=None, q_mean=None, q_sd=None):
     """Runs the main script"""
     logger.info("Starting CompareAllBanditsAlgos MAB")
-    test_all = CompareAllBanditsAlgos(arms=arms, number_of_trials=number_of_trials #q_mean=[1,2,3,4,5]
-    )
-    test_all.test_algo(OnlyExploration)
+    test_all = CompareAllBanditsAlgos(
+        arms=arms, number_of_trials=number_of_trials,
+        time_steps=time_steps, 
+        q_mean=q_mean, q_sd=q_sd)
+    
+    # test_all.test_algo(OnlyExploration)
     test_all.test_algo(OnlyExploitation)
-    test_all.test_algo(GaussianThompsonSampling)
+    # test_all.test_algo(GaussianThompsonSampling)
     test_all.test_algo(GBA)
-    for epsilon in [.1, .5, .9]:
-        test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Greedy {epsilon}")
-        test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Optimistic {epsilon}", initial=5)
-        test_all.test_algo(UCB, UCB_param = epsilon, col_name = f"UCB {epsilon}")
+    for epsilon in [.9]:
+        test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Greedy \u03B5 {epsilon}")
+        test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Optimistic \u03B5 {epsilon}", initial=20)
+        test_all.test_algo(UCB,  UCB_param=epsilon, col_name = f"UCB \u03B5 {epsilon}")
     tot_return, best_actions = test_all.return_dfs()
     test_all.plot_returns(tot_return)
     test_all.plot_action_taken(best_actions)
+    all_dfs = test_all.return_dfs()
 
 if __name__ == "__main__":
-    bandits = Bandits(number_of_arms = 5)
-    bandits.plot_bandits()
-    for mab_examples in MABExamples.__subclasses__():
-        mab_examples().mab(bandits, pic_name=f"{mab_examples.__name__}", times=500)
-    # main(arms=5, number_of_trials=50)
+    # bandits = Bandits(number_of_arms = 4, q_mean=[1,2,3,4], q_sd=[0.0, 0.0, 0.0, 0.0])
+    # bandits.plot_bandits()
+    # for mab_examples in MABExamples.__subclasses__():
+    #     mab_examples().mab(bandits, pic_name=f"{mab_examples.__name__}", times=100)
+
+    main(arms=4, number_of_trials=100, time_steps=100, q_mean=[1,2,3,4], q_sd=[0.0, 0.0, 0.0, 0.0])
