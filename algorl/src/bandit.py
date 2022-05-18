@@ -33,6 +33,7 @@ class CompareAllBanditsAlgos(object):
         self.number_of_trials = number_of_trials
         self.arms = arms
         self.images_dir = images_dir
+        create_directory(directory_path = self.images_dir)
         self.q_mean = np.random.randn(self.arms) if q_mean is None else q_mean
         self.q_sd = [1] * self.arms if q_sd is None else q_sd
     

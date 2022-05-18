@@ -35,7 +35,7 @@ class OnlyExploitationRun(MABExamples):
             best_action_percentages.append(best_action_percentage)
         # print(best_action_percentage)
         print(np.mean([best_action_percentages], axis=1)[0])
-"""
+# """
 class GreedySampleAverages(MABExamples):
     ''' Test the greedy algorithm with sample_averages '''
     def __init__(self):
@@ -135,31 +135,36 @@ class BernoulliThompsonSamplingRun(MABExamples):
             'BernTS':BernTS_actions, 'BernGreedy':BernGreedy_actions}))
 # """
 
-def main(arms=5, number_of_trials=5, time_steps=None, q_mean=None, q_sd=None):
+def main(arms=5, number_of_trials=5, time_steps=None, q_mean=None, q_sd=None, initial=0, images_dir='images'):
     """Runs the main script"""
     logger.info("Starting CompareAllBanditsAlgos MAB")
     test_all = CompareAllBanditsAlgos(
         arms=arms, number_of_trials=number_of_trials,
         time_steps=time_steps, 
-        q_mean=q_mean, q_sd=q_sd)
+        q_mean=q_mean, q_sd=q_sd, images_dir=images_dir)
     
-    # test_all.test_algo(OnlyExploration)
+    test_all.test_algo(OnlyExploration)
     test_all.test_algo(OnlyExploitation)
     # test_all.test_algo(GaussianThompsonSampling)
     test_all.test_algo(GBA)
     for epsilon in [.9]:
         test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Greedy \u03B5 {epsilon}")
-        test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Optimistic \u03B5 {epsilon}", initial=20)
         test_all.test_algo(UCB,  UCB_param=epsilon, col_name = f"UCB \u03B5 {epsilon}")
+        if initial>0:
+            test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Optimistic \u03B5 {epsilon}", initial=initial)
     tot_return, best_actions = test_all.return_dfs()
     test_all.plot_returns(tot_return)
     test_all.plot_action_taken(best_actions)
-    all_dfs = test_all.return_dfs()
+
 
 if __name__ == "__main__":
-    # bandits = Bandits(number_of_arms = 4, q_mean=[1,2,3,4], q_sd=[0.0, 0.0, 0.0, 0.0])
-    # bandits.plot_bandits()
-    # for mab_examples in MABExamples.__subclasses__():
-    #     mab_examples().mab(bandits, pic_name=f"{mab_examples.__name__}", times=100)
+    bandits = Bandits(number_of_arms = 4, q_mean=[1,2,3,4], q_sd=[0.0, 0.0, 0.0, 0.0])
+    bandits.plot_bandits()
+    for mab_examples in MABExamples.__subclasses__():
+        mab_examples().mab(bandits, pic_name=f"{mab_examples.__name__}", times=100)
 
-    main(arms=4, number_of_trials=100, time_steps=100, q_mean=[1,2,3,4], q_sd=[0.0, 0.0, 0.0, 0.0])
+    # Example 1
+    main(arms=4, number_of_trials=250, time_steps=75, q_mean=[1,2,3,4], q_sd=[0.0, 0.0, 0.0, 0.0], initial=20)
+
+    # Example 2
+    main(arms=5, number_of_trials=250, time_steps=50, images_dir="images2", initial=3)
