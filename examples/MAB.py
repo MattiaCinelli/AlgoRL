@@ -13,91 +13,158 @@ from algorl.src.bandit import *
 
 logger = logging.getLogger(__name__)
 
-def greedy_sample_averages():
+from abc import ABC, abstractmethod
+class MABExamples(ABC):
+    '''Operations'''
+    @abstractmethod
+    def mab():
+        pass
+
+class OnlyExploitationRun(MABExamples):
+    def __init__(self):
+        super().__init__()
+
+    def mab(self, bandits, pic_name, times):
+        best_action_percentages = []
+        for num in range(150):
+            print(num)
+            oe = OnlyExploitation(bandits)
+            tot_return, best_action_percentage = oe.simulate(time = times)
+            # bandits.plot_true_mean_vs_estimation(pic_name)
+            # regret = oe.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return)
+            best_action_percentages.append(best_action_percentage)
+        # print(best_action_percentage)
+        print(np.mean([best_action_percentages], axis=1)[0])
+# """
+class GreedySampleAverages(MABExamples):
+    ''' Test the greedy algorithm with sample_averages '''
+    def __init__(self):
+        super().__init__()
+
+    def mab(self, bandits, pic_name, times):
+        greedy = Greedy(bandits)
+        tot_return, best_action_percentage = greedy.simulate(time = times)
+        bandits.plot_true_mean_vs_estimation(pic_name)
+        regret = greedy.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return)
+        ic(regret)
+        # print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
+
+
+class GreedyStepSize(MABExamples):
+    ''' Test the greedy algorithm with step_size '''
+    def __init__(self):
+        super().__init__()
+
+    def mab(self, bandits, pic_name, times):
+        greedy = Greedy(bandits, sample_averages=False, step_size=0.1)
+        tot_return, best_action_percentage = greedy.simulate(time = times)
+        bandits.plot_true_mean_vs_estimation(pic_name)
+        # print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
+        ic(greedy.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return))
+
+
+class GreedySampleAveragesWithInitials(MABExamples):
     '''
-    Test the greedy algorithm with sample_averages
+    Test the greedy algorithm with optimistic initial values
     '''
-    bandits = Bandits(number_of_arms = 5) 
-    greedy = Greedy(bandits)
-    greedy.simulate(time = 500)
-    bandits.plot_bandits()
-    bandits.plot_true_mean_vs_estimation()
+    def __init__(self):
+        super().__init__()
 
-def greedy_step_size():
-    '''
-    Test the greedy algorithm with sample_averages
-    '''
-    bandits = Bandits(number_of_arms = 5) 
-    greedy = Greedy(bandits, sample_averages=False, step_size=0.1)
-    greedy.simulate(time = 500)
-    bandits.plot_true_mean_vs_estimation()
+    def mab(self, bandits, pic_name, times):
+        greedy = Greedy(bandits, sample_averages=True, initial_values=10)
+        tot_return, best_action_percentage = greedy.simulate(time = times)
+        bandits.plot_true_mean_vs_estimation(pic_name)
+        # print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
+        ic(greedy.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return))
 
-def greedy_sample_averages_with_initials():
-    '''
-    Test the greedy algorithm with sample_averages
-    '''
-    bandits = Bandits(number_of_arms = 5, initial=5) 
-    greedy = Greedy(bandits, )
-    greedy.simulate(time = 500)
-    bandits.plot_true_mean_vs_estimation()
 
-def UCB_test():
-    bandits = Bandits(number_of_arms = 5) 
-    ucb = UCB(bandits)
-    ucb.simulate(time = 500)
-    bandits.plot_true_mean_vs_estimation()
+class UCBRun(MABExamples):
+    def __init__(self):
+        super().__init__()
 
-def BernoulliThompsonSampling_test():
-    bernoulli_bandits = BernoulliBandits(number_of_arms = 5)#, q_mean=[0.4, 0.6, 0.7, 0.8, 0.9])
-    # BernTS
-    ts = BernoulliThompsonSampling(bandits=bernoulli_bandits, bandit_type = "BernTS")
-    BernTS_return, BernTS_actions = ts.simulate(time=100)
-    bernoulli_bandits.plot_true_mean_vs_estimation(y_axis = 'theta_hat')
+    def mab(self, bandits, pic_name, times):
+        ucb = UCB(bandits)
+        tot_return, best_action_percentage = ucb.simulate(time = times)
+        bandits.plot_true_mean_vs_estimation(pic_name)
+        # print((ucb.bandits.bandit_df.loc['action_count', :]*ucb.bandits.bandit_df.loc['q_estimation', :]).sum())
+        ic(ucb.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return))
 
-    # BernGreedy
-    ts = BernoulliThompsonSampling(bandits=bernoulli_bandits, bandit_type = "BernGreedy")
-    BernGreedy_return, BernGreedy_actions = ts.simulate(time=100)
 
-    CompareAllBanditsAlgos().plot_returns(pd.DataFrame({
-        'BernTS':np.cumsum(BernTS_return), 'BernGreedy':np.cumsum(BernGreedy_return)}))
-    CompareAllBanditsAlgos().plot_action_taken(pd.DataFrame({ 
-        'BernTS':BernTS_actions, 'BernGreedy':BernGreedy_actions}))
-    
-def GaussianThompsonSampling_test():
-    bandits = Bandits(number_of_arms = 5)
-    gts = GaussianThompsonSampling(bandits=bandits)
-    gts.simulate(time=500)    
-    bandits.plot_true_mean_vs_estimation()
-    print(gts.bandits.bandit_df)
+class GaussianThompsonSamplingRun(MABExamples):
+    def __init__(self):
+        super().__init__()
 
-def main(arms=5, number_of_trials=5):
+    def mab(self, bandits, pic_name, times):
+        gts = GaussianThompsonSampling(bandits=bandits)
+        tot_return, best_action_percentage = gts.simulate(time=times)    
+        bandits.plot_true_mean_vs_estimation(pic_name)
+        # print((gts.bandits.bandit_df.loc['action_count', :]*gts.bandits.bandit_df.loc['q_estimation', :]).sum())
+        ic(gts.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return))
+
+
+class GBARun(MABExamples):
+    def __init__(self):
+        super().__init__()
+
+    def mab(self, bandits, pic_name, times):
+        gba = GBA(bandits)
+        tot_return, best_action_percentage = gba.simulate(time = times)
+        bandits.plot_true_mean_vs_estimation(pic_name)
+        # print((gba.bandits.bandit_df.loc['action_count', :]*gba.bandits.bandit_df.loc['q_estimation', :]).sum())
+        ic(gba.bandits.bandit_df.loc['target', :].max()*times - np.sum(tot_return))
+# """
+"""
+class BernoulliThompsonSamplingRun(MABExamples):
+    def __init__(self):
+        super().__init__()
+
+    def mab(self, bandits, pic_name, times):
+        bernoulli_bandits = BernoulliBandits(number_of_arms = 5, q_mean=[0.1, 0.2, 0.5, 0.05, 0.15])
+        # BernTS
+        ts = BernoulliThompsonSampling(bandits=bernoulli_bandits, bandit_type = "BernTS")
+        BernTS_return, BernTS_actions = ts.simulate(time=times)
+        bernoulli_bandits.plot_true_mean_vs_estimation(pic_name=pic_name, y_axis = 'theta_hat')
+
+        # BernGreedy
+        ts = BernoulliThompsonSampling(bandits=bernoulli_bandits, bandit_type = "BernGreedy")
+        BernGreedy_return, BernGreedy_actions = ts.simulate(time=times)
+
+        CompareAllBanditsAlgos(time_steps=times).plot_returns(pd.DataFrame({
+            'BernTS':np.cumsum(BernTS_return), 'BernGreedy':np.cumsum(BernGreedy_return)}) )
+        CompareAllBanditsAlgos(time_steps=times).plot_action_taken(pd.DataFrame({ 
+            'BernTS':BernTS_actions, 'BernGreedy':BernGreedy_actions}))
+# """
+
+def main(arms=5, number_of_trials=5, time_steps=None, q_mean=None, q_sd=None, initial=0, images_dir='images'):
     """Runs the main script"""
     logger.info("Starting CompareAllBanditsAlgos MAB")
-    test_all = CompareAllBanditsAlgos(arms=arms, number_of_trials=number_of_trials #q_mean=[1,2,3,4,5]
-    )
+    test_all = CompareAllBanditsAlgos(
+        arms=arms, number_of_trials=number_of_trials,
+        time_steps=time_steps, 
+        q_mean=q_mean, q_sd=q_sd, images_dir=images_dir)
+    
     test_all.test_algo(OnlyExploration)
     test_all.test_algo(OnlyExploitation)
-    test_all.test_algo(GaussianThompsonSampling)
+    # test_all.test_algo(GaussianThompsonSampling)
     test_all.test_algo(GBA)
-    for epsilon in [.1, .5, .9]:
-        test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Greedy {epsilon}")
-        test_all.test_algo(UCB, UCB_param = epsilon, col_name = f"UCB {epsilon}")
+    for epsilon in [.9]:
+        test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Greedy \u03B5 {epsilon}")
+        test_all.test_algo(UCB,  UCB_param=epsilon, col_name = f"UCB \u03B5 {epsilon}")
+        if initial>0:
+            test_all.test_algo(Greedy, epsilon=epsilon, col_name = f"Optimistic \u03B5 {epsilon}", initial=initial)
     tot_return, best_actions = test_all.return_dfs()
     test_all.plot_returns(tot_return)
     test_all.plot_action_taken(best_actions)
 
-def GBA_test():
-    bandits = Bandits(number_of_arms = 5) 
-    gba = GBA(bandits)
-    gba.simulate(time = 500)
-    bandits.plot_true_mean_vs_estimation()
 
 if __name__ == "__main__":
-    greedy_sample_averages()
-    # greedy_step_size()
-    # greedy_sample_averages_test_with_initials()
-    # UCB_test()
-    # BernoulliThompsonSampling_test()
-    # GaussianThompsonSampling_test()
-    # GBA_test()
-    # main(arms=5, number_of_trials=50)
+    bandits = Bandits(number_of_arms = 4, q_mean=[1,2,3,4], q_sd=[0.0, 0.0, 0.0, 0.0])
+    bandits.plot_bandits()
+    for mab_examples in MABExamples.__subclasses__():
+        mab_examples().mab(bandits, pic_name=f"{mab_examples.__name__}", times=100)
+
+    # Example 1
+    main(arms=4, number_of_trials=250, time_steps=75, q_mean=[1,2,3,4], q_sd=[0.0, 0.0, 0.0, 0.0], initial=20)
+
+    # Example 2
+    main(arms=10, number_of_trials=250, time_steps=50, images_dir="images2", initial=3)
