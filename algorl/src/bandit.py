@@ -54,6 +54,7 @@ class CompareAllBanditsAlgos(object):
             rewards.append(reward)
             best_actions.append(best_action)
             bandits.reset_bandit_df()
+        bandits.plot_bandits()
         # bandits.plot_true_mean_vs_estimation(pic_name = f"{col_name}_true_mean_vs_estimation")
         self.df_return[f"{col_name}"] = pd.Series(np.mean([rewards], axis=1)[0], index=range(self.time_steps))
         # self.df_return[f"{col_name}"] = pd.Series(np.cumsum(np.mean([rewards], axis=1)[0]), index=range(self.time_steps))

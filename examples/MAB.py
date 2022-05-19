@@ -167,4 +167,4 @@ if __name__ == "__main__":
     main(arms=4, number_of_trials=250, time_steps=75, q_mean=[1,2,3,4], q_sd=[0.0, 0.0, 0.0, 0.0], initial=20)
 
     # Example 2
-    main(arms=5, number_of_trials=250, time_steps=50, images_dir="images2", initial=3)
+    main(arms=10, number_of_trials=250, time_steps=50, images_dir="images2", initial=3)
