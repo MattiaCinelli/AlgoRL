@@ -17,14 +17,16 @@ from ..logs import logging
 from .tool_box import create_directory
 import sys
 
-
+# Setting up the class
 class CompareAllBanditsAlgos(object):
     """
     Class for the testing of all MAB algorithms
     """
+    # Initialising object setting values for parameters
     def __init__(
         self, time_steps:int=100, arms:int=5, number_of_trials:int=5, images_dir:str='images', 
         q_mean:List[float] = None, q_sd:List[float] = None):
+        # Setting attributes (all methods in this class can access these)
         self.logger = logging.getLogger(__name__)
         self.logger.info("Running TestAll MAB")
         self.df_return = pd.DataFrame()
@@ -36,6 +38,7 @@ class CompareAllBanditsAlgos(object):
         self.q_mean = np.random.randn(self.arms) if q_mean is None else q_mean
         self.q_sd = [1] * self.arms if q_sd is None else q_sd
     
+    # Defining test_algo with parameters 
     def test_algo(self, algo, col_name:str=None, epsilon:float=.1, UCB_param:float=0.1):
         self.epsilon = epsilon
         self.UCB_param = UCB_param
@@ -270,6 +273,7 @@ class OnlyExploitation(MABFunctions):
         return self.bandits.return_bandit_df().loc['target', :].idxmax()
 
 
+# Creating the class with the parameter MABFunctions (needs it to run)
 class Greedy(MABFunctions):
     """
     This code allows pure, epsilon-greedy with action value or step size with or without optimistic initial values. 
@@ -288,12 +292,14 @@ class Greedy(MABFunctions):
         N(A) N(A)+1
         Q(A) Q(A)+ 1/N(A) * (R - Q(A))
     """
-    
+    # Initalising with parameters
+    # What does the bandits:Bandits mean ?
     def __init__(
         self, bandits:Bandits, epsilon:float=.1, 
         sample_averages:bool=True, step_size:float=None
         ) -> None:
         MABFunctions.__init__(self)
+        # Setting attributes all functions in the class can use these
         self.logger.info("Initialize Greedy")
         self.bandits = bandits
         self.epsilon = epsilon
