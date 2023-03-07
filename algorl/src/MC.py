@@ -29,8 +29,8 @@ class MonteCarloFunctions(RLFunctions):
         '''Create the past S, R from starting state to the terminal state'''
         state_reward = []
         while not self.env.is_terminal_state(state):            
-            new_state = self.env.new_state_given_action(state, action)
-            reward = self.env.grid[self.env.new_state_given_action(state, action)] - 1
+            new_state = self.env.next_state_given_action(state, action)
+            reward = self.env.grid[self.env.next_state_given_action(state, action)] - 1
             state_reward.append((state, reward))
 
             state = new_state
@@ -123,7 +123,7 @@ class MCPrediction(MonteCarloFunctions):
             # Compute random first state
             first_state = self.starting_state
             # Random  action for first state
-            first_action = self.get_random_action()
+            first_action = self.get_random_action(first_state)
             self.logger.debug(f'First state: {first_state}, action: {first_action}')
             # Compute all following states and actions
             state_reward_path = self.state_reward_path(first_state, first_action)
@@ -146,6 +146,7 @@ class MCPrediction(MonteCarloFunctions):
         state_value['average'] = state_value.sum_value/state_value.times
         for grid_state in state_value.states.unique():
             self.env.grid[grid_state] = state_value[state_value.states == grid_state].average
+        print(state_value)
 
 
 class FirstVisitMCPredictions(MonteCarloFunctions):
