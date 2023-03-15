@@ -146,6 +146,7 @@ class MCPrediction(MonteCarloFunctions):
         state_value['average'] = state_value.sum_value/state_value.times
         for grid_state in state_value.states.unique():
             self.env.grid[grid_state] = state_value[state_value.states == grid_state].average
+        print(state_value)
 
 
 class FirstVisitMCPredictions(MonteCarloFunctions):
