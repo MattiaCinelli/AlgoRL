@@ -453,3 +453,81 @@ class TabularDynaQ(TemporalDifferenceFunctions): #TODO
                 next_state = self.env.next_state_given_action(state, action)
                 next_action = self.select_action(next_state, Q)
                 reward = self.env.grid[next_state]
+
+
+class BackwardsViewTDLambda(RLFunctions):
+    """
+    Backwards View TD(Lambda) Algorithm for computing the state-value function of a given policy.
+    Policy is a random policy as default. 
+    Reference:
+    --------------------
+    - Grokking Deep Reinforcement Learning by Miguel Morales. Page 158.
+    """
+
+    def __init__(
+        self, env, alpha:float = 0.3, gamma:float = 0.9, lambda_:float = 0.2, 
+        starting_state=(2,0), num_of_epochs:int = 1_000, num_episodes =10_000,
+        plot_name='BV-TD(Lambda)', reward = -1):
+        """
+        """
+        super().__init__()
+        self.env = env
+        self.alpha = alpha
+        self.gamma = gamma
+        self.lambda_ = lambda_
+        self.starting_state = env.initial_state if starting_state == None else starting_state
+        self.num_of_epochs = num_of_epochs
+        self.num_of_episodes = num_episodes
+        self.plot_name = plot_name
+        self.reward = reward
+
+    def update_state_values(self, state_values:pd.DataFrame, state:tuple, state_prime:tuple, reward:float):
+        # Compute the TD target.
+        td_target = reward + self.gamma * state_values.loc[state_values.states == state_prime, 'state_value'].to_numpy() # Changing to np avoids 0s being turned into NaNs.
+        # Compute the TD error.  
+        td_error = td_target - (state_values.loc[state_values.states == state, 'state_value']).to_numpy()
+        # Update the states.
+        updated_values = state_values.loc[:, 'eligibility'].to_numpy() * self.alpha * td_error
+        state_values.loc[:, 'state_value']+= updated_values
+
+        return state_values
+
+
+    def compute_state_values(self):
+
+        state_values = pd.DataFrame({"states":self.env.all_states, 'times':0, 'eligibility':0, 'state_value':0})
+
+        for epoch in range(self.num_of_epochs):
+            if epoch % 100 == 0:
+                self.logger.info(f'Epoch {epoch}')
+
+            # Initialise the starting state and reset the eligibility data frame.
+            state = self.starting_state
+            state_values.loc[:, 'eligibility'] = 0
+
+            # Until we hit a terminal state. 
+            while not self.env.is_terminal_state(state):
+
+                # Compute the action, state prime, reward and increment the eligibility vector. 
+                action = self.get_random_action(state)
+                state_prime = self.env.next_state_given_action(state, action)
+                reward = self.env.grid[self.env.next_state_given_action(state, action)] - 1
+                state_values.loc[state_values.states == state, ['times', 'eligibility']] += 1
+
+                # Call the compute state function. 
+                state_values = self.update_state_values(state_values, state, state_prime, reward)
+
+                # Decay the eligibility.
+                state_values.loc[:, 'eligibility'] = state_values.loc[:, 'eligibility'] * (self.lambda_ * self.gamma)
+
+                # Update the state. 
+                state = state_prime
+
+        # For plotting. 
+        state_values.drop(state_values[state_values.times == 0].index, inplace=True)
+        state_values.reset_index(drop=True, inplace=True)
+        for grid_state in state_values.states.unique():
+            self.env.grid[grid_state]=state_values[state_values.states == grid_state].state_value
+                
+
+        
