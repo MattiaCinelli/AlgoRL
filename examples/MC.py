@@ -1,5 +1,7 @@
 """Simple script to run snips of code"""
 # Standard Libraries
+import os
+os.chdir(os.path.dirname(__file__))
 
 # Third party libraries
 import pandas as pd
@@ -10,6 +12,8 @@ from algorl.logs import logging
 from algorl.src.grid_environment import *
 from algorl.src.MC import MCPrediction, FirstVisitMCPredictions, MCExploringStarts
 from algorl.src.TD import BackwardsViewTDLambda
+
+logger = logging.getLogger(__name__)
 
 def run_MCPrediction(env):
     mc = MCPrediction(env)
@@ -34,6 +38,9 @@ def run_BackwardsView_TDL(env):
 
 if __name__ == "__main__":
     for gridword in GridWorldExamples.__subclasses__():
+        run_MCPrediction(gridword.gridword())
+        run_FirstVisitMCPredictions(gridword.gridword())
+        run_MCExploringStarts(gridword.gridword())
         # run_MCPrediction(gridword.gridword())
         run_BackwardsView_TDL(gridword.gridword())
         sys.exit()

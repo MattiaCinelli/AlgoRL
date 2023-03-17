@@ -13,8 +13,8 @@ from icecream import ic
 from plotnine import *
 
 # Local imports
-from ..logs import logging
-from .tool_box import create_directory
+from algorl.logs import logging
+from algorl.src.tool_box import create_directory
 import sys
 
 
@@ -33,10 +33,11 @@ class CompareAllBanditsAlgos(object):
         self.number_of_trials = number_of_trials
         self.arms = arms
         self.images_dir = images_dir
+        create_directory(directory_path = self.images_dir)
         self.q_mean = np.random.randn(self.arms) if q_mean is None else q_mean
         self.q_sd = [1] * self.arms if q_sd is None else q_sd
     
-    def test_algo(self, algo, col_name:str=None, epsilon:float=.1, UCB_param:float=0.1):
+    def test_algo(self, algo, col_name:str=None, epsilon:float=.1, UCB_param:float=0.1, initial:float=.0):
         self.epsilon = epsilon
         self.UCB_param = UCB_param
         if col_name is None:
@@ -46,14 +47,17 @@ class CompareAllBanditsAlgos(object):
         for _ in range(self.number_of_trials):
             self.logger.info("\ttest: {}".format(_))
             #1 New bandits
-            bandits = Bandits(number_of_arms = self.arms)
+            bandits = Bandits(number_of_arms = self.arms, initial=initial, q_mean=self.q_mean, q_sd=self.q_sd)
             #2 Simulate
             explore = algo(bandits)
-            reward, best_action =  explore.simulate(time = self.time_steps)
-            rewards.append(np.cumsum(reward))
+            reward, best_action = explore.simulate(time = self.time_steps)
+            rewards.append(reward)
             best_actions.append(best_action)
             bandits.reset_bandit_df()
+        bandits.plot_bandits()
+        # bandits.plot_true_mean_vs_estimation(pic_name = f"{col_name}_true_mean_vs_estimation")
         self.df_return[f"{col_name}"] = pd.Series(np.mean([rewards], axis=1)[0], index=range(self.time_steps))
+        # self.df_return[f"{col_name}"] = pd.Series(np.cumsum(np.mean([rewards], axis=1)[0]), index=range(self.time_steps))
         self.df_action[f"{col_name}"] = pd.Series(np.mean([best_actions], axis=1)[0], index=range(self.time_steps))
     
     def return_dfs(self):
@@ -82,13 +86,13 @@ class CompareAllBanditsAlgos(object):
         g.save(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
 
 
-    def plot_action_taken(self, best_actions, pic_name:str = 'BestActions' ):
+    def plot_action_taken(self, best_actions, pic_name:str = 'Optimal Actions' ):
         self._comparing_plots(
-            best_actions, "% of time best action is taken", pic_name
+            best_actions, "% of time the optimal action is taken", pic_name
         )
 
-    def plot_returns(self, tot_return, pic_name:str='TotalReturns' ):
-        self._comparing_plots(tot_return, "Total returns", pic_name)
+    def plot_returns(self, tot_return, pic_name:str='Average reward per time step' ):
+        self._comparing_plots(tot_return, "Amount", pic_name)
 
 
 class Bandits():
@@ -102,7 +106,7 @@ class Bandits():
         q_sd:List[float] = None, initial:float=.0,
         bandit_name:List[str]=None, images_dir:str = 'images') -> None:
         self.logger = logging.getLogger(__name__)
-        self.logger.info("Initialize Bandits")
+        # self.logger.info("Initialize Bandits")
 
         self.number_of_arms = number_of_arms
         self.bandit_name = list(string.ascii_uppercase[:self.number_of_arms]) if bandit_name is None else bandit_name
@@ -152,7 +156,7 @@ class Bandits():
             ggplot(self.bandit_df.T, aes(x='target', y=y_axis, color=self.bandit_df.columns), 
             )
             + geom_point()
-            + labs(x='Target (True Mean)', y='Estimated Mean', color='Bandits')
+            + labs(x='True Mean', y='Estimated Mean', color='Bandits')
             + ggtitle(f"Target vs estimated values ({self.number_of_arms}-bandits)")
         ) + geom_segment( # Add diagonal line
             aes(x = min(self.q_mean), xend = max(self.q_mean),
@@ -163,13 +167,14 @@ class Bandits():
         )
         g.save(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
 
+
 class BernoulliBandits(Bandits):
     def __init__(
         self, number_of_arms: int = 10, q_mean: List[float] = None, q_sd: List[float] = None, 
         initial: float = 1, bandit_name: List[str] = None, images_dir: str = 'images') -> None:
         ''''''
         self.logger = logging.getLogger(__name__)
-        self.logger.info("Initialize Bernoulli Bandits")
+        # self.logger.info("Initialize Bernoulli Bandits")
         q_mean = np.linspace(0.1, 0.9, num=number_of_arms) if q_mean is None else q_mean
         super().__init__(number_of_arms, q_mean, q_sd, initial, bandit_name, images_dir)
         self.bandit_df.index = [
@@ -243,7 +248,7 @@ class OnlyExploration(MABFunctions):
         self.tot_return = []
         self.sample_averages = sample_averages
         self.step_size = step_size
-        self.logger.info("Initialize OnlyExploration")
+        # self.logger.info("Initialize OnlyExploration")
 
     def _act(self, _:int) -> str:
         """
@@ -257,17 +262,19 @@ class OnlyExploitation(MABFunctions):
         self, bandits:Bandits, sample_averages:bool=True, 
         step_size:float=None) -> None:
         MABFunctions.__init__(self)
-        self.logger.info("Initialize OnlyExploitation")
+        # self.logger.info("Initialize OnlyExploitation")
         self.bandits = bandits
         self.tot_return = []
         self.sample_averages = sample_averages
         self.step_size = step_size
+        self.fix_choice = np.random.choice(self.bandits.bandit_name)
 
     def _act(self, _:int) -> str:
         """
         This function returns the known a priori best action
         """
-        return self.bandits.return_bandit_df().loc['target', :].idxmax()
+        # ic(self.fix_choice)
+        return self.fix_choice
 
 
 class Greedy(MABFunctions):
@@ -291,15 +298,16 @@ class Greedy(MABFunctions):
     
     def __init__(
         self, bandits:Bandits, epsilon:float=.1, 
-        sample_averages:bool=True, step_size:float=None
+        sample_averages:bool=True, step_size:float=None, initial:float=.0
         ) -> None:
         MABFunctions.__init__(self)
-        self.logger.info("Initialize Greedy")
+        # self.logger.info("Initialize Greedy")
         self.bandits = bandits
         self.epsilon = epsilon
         self.sample_averages = sample_averages
         self.step_size = step_size
         self.tot_return = []
+        self.bandits.bandit_df.loc['q_estimation', :] += initial
 
     def _act(self, _:int) -> str:
         """
@@ -324,7 +332,7 @@ class UCB(MABFunctions):
         sample_averages:bool=True, step_size:float=None, UCB_param:float=0.1
         ) -> None:
         MABFunctions.__init__(self)
-        self.logger.info("Initialize UCB")
+        # self.logger.info("Initialize UCB")
         self.bandits = bandits
         self.UCB_param = UCB_param
         self.sample_averages = sample_averages
@@ -354,17 +362,19 @@ class GBA(MABFunctions):
     """
     def __init__(
         self, bandits:Bandits, decay_ratio:float=0.04,
-        sample_averages:bool=True, step_size:float=None, init_temp=float('inf'), min_temp=0.0
+        sample_averages:bool=True, step_size:float=None, init_temp=100_000_000, min_temp=0.01 #float('inf')
         ) -> None:
         MABFunctions.__init__(self)
-        self.logger.info("Initialize GBA/SoftMax")
+        # self.logger.info("Initialize GBA/SoftMax")
         self.bandits = bandits
         self.sample_averages = sample_averages
         self.step_size = step_size
         self.tot_return = []
         self.decay_ratio = decay_ratio
-        self.init_temp = min(init_temp, sys.float_info.max)
-        self.min_temp = max(min_temp, np.nextafter(np.float32(0), np.float32(1)))
+        # self.init_temp = min(init_temp, sys.float_info.max)
+        self.init_temp = init_temp
+        # self.min_temp = max(min_temp, np.nextafter(np.float32(0), np.float32(1)))
+        self.min_temp = min_temp
         self.logger.debug(f'Lin SoftMax {init_temp}, {min_temp}, {decay_ratio}')
 
     def _act(self, num:int) -> str:
@@ -374,7 +384,7 @@ class GBA(MABFunctions):
         decay_episodes = num+1 * self.decay_ratio
         temp = 1 - np.exp(1) / decay_episodes
 
-        temp *= self.init_temp - self.min_temp
+        temp *= (self.init_temp - self.min_temp)
         temp += self.min_temp
         temp = np.clip(temp, self.min_temp, self.init_temp)
 
@@ -436,7 +446,7 @@ class BernoulliThompsonSampling(MABFunctions):
         self, bandits:Bandits, alpha = 1, beta = 1, bandit_type:str='BernTS',
         ) -> None:
         MABFunctions.__init__(self)
-        self.logger.info("Initialize BernoulliThompsonSampling")
+        # self.logger.info("Initialize BernoulliThompsonSampling")
         self.bandits = bandits
         self.alpha = alpha
         self.beta = beta
@@ -497,7 +507,7 @@ class GaussianThompsonSampling(MABFunctions):
     def __init__(
         self, bandits:Bandits, q_estimation:float=0, estimated_sd:float=100) -> None:
         MABFunctions.__init__(self)
-        self.logger.info("Initialize GaussianThompsonSampling")
+        # self.logger.info("Initialize GaussianThompsonSampling")
         self.bandits = bandits
         self.tot_return = []
         self.bandits.bandit_df.loc['theta_hat', :] = 0

@@ -201,7 +201,11 @@ class MakeGrid():
         return tb_policy
 
     def next_state_given_action(self, state, action):
-        """ Given a state and an action, returns the new state """
+        """Given a state and an action, returns the new state
+        to be compatible with:
+         state, reward, done, info = env.step(action)
+        next_state_given_action
+        """
         new_state = tuple(map(sum, zip(state, self.action_space[action]))) # new state given action
         ## Bump into wall or border
         if new_state in self.wall_states_list or new_state not in self.all_states:
