@@ -1,29 +1,40 @@
-##############################
-ENVIRONMENT_PREFIX=$(shell pwd)
-ENVIRONMENT_NAME=.valgorl
-ALTERNATIVE_ENV_NAME=${ENVIRONMENT_NAME}_nb #Name of the env for jupyter notebook. 
-# You might want to give the same name env but different for the notebook
+# Get the name of the current directory
+CURRENT_DIR := $(shell basename "$(PWD)")
 
-# Virtualenv for project
-dev: requirements.txt
+# Define the name of the virtual environment
+VENV_NAME := .venv_$(CURRENT_DIR)
+
+# Define the path to the Python executable
+PYTHON := python3
+
+# Define the path to the virtual environment's bin directory
+VENV_BIN := $(CURDIR)/$(VENV_NAME)/bin
+
+# Default target: create the virtual environment
+.PHONY: all
+all: $(VENV_BIN)/activate
+
+# Target to create the virtual environment
+$(VENV_BIN)/activate: requirements.txt
 	echo "Creating virtual environment..."
-	python3 -m piptools sync requirements.txt requirements.txt
+	$(PYTHON) -m venv $(VENV_NAME)
+	touch $(VENV_BIN)/activate
+	$(VENV_BIN)/pip install --upgrade pip
+	$(VENV_BIN)/pip install -r requirements.txt
+	$(VENV_BIN)/pip install -e .
 
-requirements.txt: venv
-	python3 -m piptools compile requirements.in --output-file requirements.txt
-
-venv: requirements.in	
-	echo "Compiling requirements..."
-	python3 -m venv ${ENVIRONMENT_NAME}
-	pip install --upgrade 'pip'
-	. ${ENVIRONMENT_NAME}/bin/activate
-	pip install 'pip-tools' 'numpy' 'scipy' 'setuptools>=41.0.0'
-	# python3 -m ipykernel install --user --name=${ENVIRONMENT_NAME} --display-name "${ALTERNATIVE_ENV_NAME}"
-
-## Delete all compiled Python files
+# Target to clean up the virtual environment
+.PHONY: clean
 clean:
-	find . -type f -name "*.py[co]" -delete
-	find . -type d -name "__pycache__" -delete
+	rm -rf $(VENV_NAME)
 
-# References
-# [1] https://pypi.org/project/pip-tools/
+# Target to install packages
+.PHONY: install
+install: $(VENV_BIN)/activate requirements.txt
+	@echo "Installing packages..."
+	@$(VENV_BIN)/pip install -r requirements.txt
+
+# Test
+# .PHONY: test
+# test:
+# 	pytest

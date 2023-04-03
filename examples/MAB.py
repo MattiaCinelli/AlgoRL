@@ -26,8 +26,7 @@ class OnlyExploitationRun(MABExamples):
 
     def mab(self, bandits, pic_name, times):
         best_action_percentages = []
-        for num in range(150):
-            print(num)
+        for _ in range(150):
             oe = OnlyExploitation(bandits)
             tot_return, best_action_percentage = oe.simulate(time = times)
             # bandits.plot_true_mean_vs_estimation(pic_name)
@@ -71,7 +70,7 @@ class GreedySampleAveragesWithInitials(MABExamples):
         super().__init__()
 
     def mab(self, bandits, pic_name, times):
-        greedy = Greedy(bandits, sample_averages=True, initial_values=10)
+        greedy = Greedy(bandits, sample_averages=True, initial=10)
         tot_return, best_action_percentage = greedy.simulate(time = times)
         bandits.plot_true_mean_vs_estimation(pic_name)
         # print((greedy.bandits.bandit_df.loc['action_count', :]*greedy.bandits.bandit_df.loc['q_estimation', :]).sum())
@@ -158,13 +157,14 @@ def main(arms=5, number_of_trials=5, time_steps=None, q_mean=None, q_sd=None, in
 
 
 if __name__ == "__main__":
-    bandits = Bandits(number_of_arms = 4, q_mean=[1,2,3,4], q_sd=[0.0, 0.0, 0.0, 0.0])
+    bandits = Bandits(number_of_arms = 4, q_mean=[1,2,3,4], q_sd=[1.0, 1.0, 1.0, 1.0])
     bandits.plot_bandits()
-    for mab_examples in MABExamples.__subclasses__():
-        mab_examples().mab(bandits, pic_name=f"{mab_examples.__name__}", times=100)
+
+    # for mab_examples in MABExamples.__subclasses__():
+    #     mab_examples().mab(bandits, pic_name=f"{mab_examples.__name__}", times=100)
 
     # Example 1
-    main(arms=4, number_of_trials=250, time_steps=75, q_mean=[1,2,3,4], q_sd=[0.0, 0.0, 0.0, 0.0], initial=20)
+    main(arms=4, number_of_trials=250, time_steps=75, q_mean=[1,2,3,4], q_sd=[1.0, 1.0, 1.0, 1.0], initial=5)
 
     # Example 2
-    main(arms=10, number_of_trials=250, time_steps=50, images_dir="images2", initial=3)
+    main(arms=5, number_of_trials=250, time_steps=50, images_dir="images2", initial=3)

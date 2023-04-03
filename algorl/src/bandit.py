@@ -45,7 +45,7 @@ class CompareAllBanditsAlgos(object):
         self.logger.info(f"Running {col_name}")
         rewards, best_actions = [], []
         for _ in range(self.number_of_trials):
-            self.logger.info("\ttest: {}".format(_))
+            self.logger.info(f"\ttest: {_}")
             #1 New bandits
             bandits = Bandits(number_of_arms = self.arms, initial=initial, q_mean=self.q_mean, q_sd=self.q_sd)
             #2 Simulate
@@ -84,7 +84,6 @@ class CompareAllBanditsAlgos(object):
         ) + ggtitle(f"{pic_name}"
         ) + scale_fill_brewer(type="qual", palette = "Pastel1") 
         g.save(Path(self.images_dir, f'{pic_name}.png'), dpi=300)
-
 
     def plot_action_taken(self, best_actions, pic_name:str = 'Optimal Actions' ):
         self._comparing_plots(

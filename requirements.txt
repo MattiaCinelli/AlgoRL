@@ -14,7 +14,7 @@ seaborn
 # ML
 scipy
 scikit-learn
-tensorflow
+# tensorflow
 ipywidgets
 # tensorflow-gpu
 gym
@@ -48,3 +48,4 @@ pytest
 # Terminal
 rich
 chime
+plotnine

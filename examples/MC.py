@@ -39,9 +39,9 @@ def run_BackwardsView_TDL(env):
 if __name__ == "__main__":
     for gridword in GridWorldExamples.__subclasses__():
         run_MCPrediction(gridword.gridword())
-        run_FirstVisitMCPredictions(gridword.gridword())
-        run_MCExploringStarts(gridword.gridword())
+        # run_FirstVisitMCPredictions(gridword.gridword())
+        # run_MCExploringStarts(gridword.gridword())
         # run_MCPrediction(gridword.gridword())
-        run_BackwardsView_TDL(gridword.gridword())
-        sys.exit()
+        # run_BackwardsView_TDL(gridword.gridword())
+        # sys.exit()
     
