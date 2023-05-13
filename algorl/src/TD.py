@@ -530,4 +530,41 @@ class BackwardsViewTDLambda(RLFunctions):
             self.env.grid[grid_state]=state_values[state_values.states == grid_state].state_value
                 
 
-        
+''' TODO '''
+
+class Sarsa_Lambda(TemporalDifferenceFunctions):
+    """ 
+    SARSA Algorithm that utilizes the lambda target instead of the TD target.
+    Policy is epsilon-greedy. 
+    Reference:
+    --------------------
+    - Grokking Deep Reinforcement Learning by Miguel Morales. Page 210.
+    """
+
+    def __init__(self):
+        super().__init__()
+    
+
+# Q-learning Lambda
+class QLearning_Lambda(TemporalDifferenceFunctions):
+    """ 
+    Q Learning algorithm that utilizes the lambda target instead of the TD target.
+    Policy is epsilon-greedy. 
+    Reference:
+    --------------------
+    - Grokking Deep Reinforcement Learning by Miguel Morales. Page 214.     
+    """
+
+    def __init__(self):
+        super().__init__()
+    
+# Trajectory Sampling
+class TrajectorySampling(TemporalDifferenceFunctions):
+    """
+    Trajectory Sampling algorithm utilizes a learned model of the environment to produce a policy. 
+    Differs from Dyna-Q by sampling the state-action paris from the model using a greedy policy
+    (Instead of sampling the model uniformly at random).
+    Reference:
+    --------------------
+    - Grokking Deep Reinforcement Learning by Miguel Morales. Page 224.   
+    """
