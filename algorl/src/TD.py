@@ -545,7 +545,6 @@ class Sarsa_Lambda(TemporalDifferenceFunctions):
         super().__init__()
     
 
-# Q-learning Lambda
 class QLearning_Lambda(TemporalDifferenceFunctions):
     """ 
     Q Learning algorithm that utilizes the lambda target instead of the TD target.
@@ -558,7 +557,7 @@ class QLearning_Lambda(TemporalDifferenceFunctions):
     def __init__(self):
         super().__init__()
     
-# Trajectory Sampling
+
 class TrajectorySampling(TemporalDifferenceFunctions):
     """
     Trajectory Sampling algorithm utilizes a learned model of the environment to produce a policy. 
@@ -568,3 +567,6 @@ class TrajectorySampling(TemporalDifferenceFunctions):
     --------------------
     - Grokking Deep Reinforcement Learning by Miguel Morales. Page 224.   
     """
+
+    def __init__(self):
+        super().__init__()
