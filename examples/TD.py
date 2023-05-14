@@ -7,7 +7,7 @@ os.chdir(os.path.dirname(__file__))
 # Local imports
 from algorl.logs import logging
 from algorl.src.grid_environment import *
-from algorl.src.TD import TabularTD0, Sarsa, QLearning, DoubleQLearning
+from algorl.src.TD import TabularTD0, Sarsa, QLearning, DoubleQLearning, Sarsa_Lambda, Watkins_Q
 from algorl.src.Nstep import NStepTD, NStepSARSA
 
 
@@ -47,12 +47,21 @@ def run_NstepSARSA(env, grid_name, n_step):
 def run_DQL(env, grid_name):
     DoubleQLearning(env).compute_state_value(plot_name=f'dql_{grid_name}')
 
+def run_Sarsa_lambda(env, grid_name):
+    Sarsa_Lambda(env).compute_state_value(plot_name=f'sarsa_lambda_{grid_name}')
+
+def run_Watkins_Q(env, grid_name):
+    Watkins_Q(env).compute_state_value(plot_name=f'Watkins_Q_{grid_name}')
+
+
 if __name__ == "__main__":
     for gridword in GridWorldExamples.__subclasses__():
-        run_TabularTD0(gridword.gridword(), grid_name = gridword.__name__)
-        run_Sarsa(gridword.gridword(), grid_name = gridword.__name__)
-        run_QLearning(gridword.gridword(), grid_name = gridword.__name__)
-        run_DQL(gridword.gridword(), grid_name = gridword.__name__)
-        run_NstepTDv2(gridword.gridword(), grid_name = gridword.__name__, n_steps=[2,3,4,5])
-        run_NstepSARSA(gridword.gridword(), grid_name = gridword.__name__, n_step=2)
+        # run_TabularTD0(gridword.gridword(), grid_name = gridword.__name__)
+        # run_Sarsa(gridword.gridword(), grid_name = gridword.__name__)
+        # run_QLearning(gridword.gridword(), grid_name = gridword.__name__)
+        # run_DQL(gridword.gridword(), grid_name = gridword.__name__)
+        # run_NstepTDv2(gridword.gridword(), grid_name = gridword.__name__, n_steps=[2,3,4,5])
+        # run_NstepSARSA(gridword.gridword(), grid_name = gridword.__name__, n_step=2)
+        run_Sarsa_lambda(gridword.gridword(), grid_name = gridword.__name__)
+        run_Watkins_Q(gridword.gridword(), grid_name = gridword.__name__)
         sys.exit()
