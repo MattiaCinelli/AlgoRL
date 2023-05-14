@@ -59,9 +59,12 @@ class TemporalDifferenceFunctions(RLFunctions):
         # Initialize Q(s,a)
         return pd.DataFrame( 0, columns=self.env.possible_actions, index=pd.MultiIndex.from_tuples(self.env.all_states), dtype=float)
 
-    def td_control(self, algo, plot_name:str):
+    def td_control(self, algo, plot_name:str, lambda_target=False):
         # Initialize Q(s,a)
         q_values_df = self.get_q_df()
+
+        if lambda_target == True:
+            eligibility_df = self.get_q_df()
 
         # Initialize Q(s,a), for all s element of S+, a element of A(s), arbitrarily except that Q(terminal,·) = 0
         state_action_pairs = {state:self.get_random_action(state) for state in self.env.all_states}
@@ -87,7 +90,10 @@ class TemporalDifferenceFunctions(RLFunctions):
                 reward = self.env.grid[next_state]
 
                 # Compute the pair state-actions
-                q_values_df = algo(q_values_df, state, action, reward, next_state, next_action)
+                if lambda_target == False:
+                    q_values_df = algo(q_values_df, state, action, reward, next_state, next_action)
+                else:
+                    q_values_df, eligibility_df = algo(q_values_df, eligibility_df, state, action, reward, next_state, next_action)
 
                 self.logger.debug(f'S: {state}, A: {action}, R:{q_values_df.at[state, action]:.3f}, S: {next_state}, A: {next_action}')
                 state_action_pairs[next_state] = next_action
@@ -95,6 +101,9 @@ class TemporalDifferenceFunctions(RLFunctions):
                 action = next_action
 
                 num_of_steps += 1
+
+
+        self.logger.info(q_values_df)
 
         self.drew_policy(q_values_df, plot_name=plot_name)
 
@@ -530,22 +539,62 @@ class BackwardsViewTDLambda(RLFunctions):
             self.env.grid[grid_state]=state_values[state_values.states == grid_state].state_value
                 
 
-''' TODO '''
-
 class Sarsa_Lambda(TemporalDifferenceFunctions):
     """ 
     SARSA Algorithm that utilizes the lambda target instead of the TD target.
+    Trace vector can be set as either accumulating or replacing. 
     Policy is epsilon-greedy. 
     Reference:
     --------------------
     - Grokking Deep Reinforcement Learning by Miguel Morales. Page 210.
     """
 
-    def __init__(self):
+    def __init__(
+            self, env, alpha:float = 0.5, gamma:float = 0.9, lambda_:float = 0.5, 
+            epsilon:bool = 0.1, replacing_traces:bool = False, starting_state = (2,0), 
+            num_of_epochs:int = 1_000, num_episodes = 10_000, plot_name = 'Sarsa_Lambda', 
+            reward = -1):
+        """
+        """
         super().__init__()
+        self.env = env
+        self.alpha = alpha
+        self.gamma = gamma
+        self.lambda_ = lambda_
+        self.epsilon = epsilon
+        self.replacing_traces = replacing_traces
+        self.starting_state = env.initial_state if starting_state == None else starting_state
+        self.num_of_epochs = num_of_epochs
+        self.num_episodes = num_episodes
+        self.plot_name = plot_name
+        self.reward = reward
+        self.logger.info('Sarsa Lambda initialized')
+
+            
+    def sarsa_lambda_formula(self, q_values_df, eligibility_df, state, action, reward, next_state, next_action):
+
+        if self.replacing_traces == True:
+            eligibility_df.at[state, action] += 1
+            eligibility_df.clip(0.0, 1.0, inplace=True)
+        else:
+            eligibility_df.at[state, action] += 1 # Implement accumulating trace. 
+
+        # Update the Q values. 
+        td_error = reward + self.gamma * q_values_df.at[next_state, next_action] - q_values_df.at[state, action]
+        q_values_df = q_values_df + self.alpha * td_error * eligibility_df # Update all the state-action pairs.
+
+        # Decay the eligibility values.
+        eligibility_df = (self.gamma * self.lambda_) * eligibility_df
+
+        return q_values_df, eligibility_df
+
+    def compute_state_value(self, plot_name='SARSA-Lambda'):
+        self.logger.info('Compute SARSA Lambda')
+        self.td_control(algo=self.sarsa_lambda_formula, plot_name=plot_name, lambda_target=True)
+
     
 
-class QLearning_Lambda(TemporalDifferenceFunctions):
+class Watkins_Q(TemporalDifferenceFunctions): # AKA Q Learning Lambda.
     """ 
     Q Learning algorithm that utilizes the lambda target instead of the TD target.
     Policy is epsilon-greedy. 
@@ -554,19 +603,49 @@ class QLearning_Lambda(TemporalDifferenceFunctions):
     - Grokking Deep Reinforcement Learning by Miguel Morales. Page 214.     
     """
 
-    def __init__(self):
+    def __init__(
+            self, env, alpha:float = 0.5, gamma:float = 0.9, lambda_:float = 0.5, 
+            epsilon:bool = 0.1, replacing_traces:bool = False, starting_state = (2,0), 
+            num_of_epochs:int = 1_000, num_episodes = 10_000, plot_name = 'Watkins Q', 
+            reward = -1):
+        """
+        """
         super().__init__()
-    
+        self.env = env
+        self.alpha = alpha
+        self.gamma = gamma
+        self.lambda_ = lambda_
+        self.epsilon = epsilon
+        self.replacing_traces = replacing_traces
+        self.starting_state = env.initial_state if starting_state == None else starting_state
+        self.num_of_epochs = num_of_epochs
+        self.num_episodes = num_episodes
+        self.plot_name = plot_name
+        self.reward = reward
+        self.logger.info('Watkins Q initialized')
 
-class TrajectorySampling(TemporalDifferenceFunctions):
-    """
-    Trajectory Sampling algorithm utilizes a learned model of the environment to produce a policy. 
-    Differs from Dyna-Q by sampling the state-action paris from the model using a greedy policy
-    (Instead of sampling the model uniformly at random).
-    Reference:
-    --------------------
-    - Grokking Deep Reinforcement Learning by Miguel Morales. Page 224.   
-    """
+    def watkins_Q_formula(self, q_values_df, eligibility_df, state, action, reward, next_state, next_action):
+        # Increment the eligibility trace. 
+        if self.replacing_traces == True:
+            eligibility_df.at[state, action] += 1
+            eligibility_df.clip(0.0, 1.0, inplace=True)
+        else:
+            eligibility_df.at[state, action] += 1 # Implement accumulating trace. 
 
-    def __init__(self):
-        super().__init__()
+        # Update the Q values.
+        max_value = max(q_values_df.at[next_state, x] for x in self.env.possible_actions)
+        td_error = reward + self.gamma * max_value - q_values_df.at[state, action]
+        q_values_df = q_values_df + self.alpha * td_error * eligibility_df
+        
+        # Decay the eligibility matrix. 
+        eligibility_df = (self.gamma * self.lambda_) * eligibility_df
+
+        return q_values_df, eligibility_df
+
+    def compute_state_value(self, plot_name='SARSA-Lambda'):
+        self.logger.info('Compute Watkins Q')
+        self.td_control(algo=self.watkins_Q_formula, plot_name=plot_name, lambda_target=True)
+
+
+
+
