@@ -90,10 +90,10 @@ class TemporalDifferenceFunctions(RLFunctions):
                 reward = self.env.grid[next_state]
 
                 # Compute the pair state-actions
-                if lambda_target == False:
-                    q_values_df = algo(q_values_df, state, action, reward, next_state, next_action)
-                else:
+                if lambda_target:
                     q_values_df, eligibility_df = algo(q_values_df, eligibility_df, state, action, reward, next_state, next_action)
+                else:
+                    q_values_df = algo(q_values_df, state, action, reward, next_state, next_action)
 
                 self.logger.debug(f'S: {state}, A: {action}, R:{q_values_df.at[state, action]:.3f}, S: {next_state}, A: {next_action}')
                 state_action_pairs[next_state] = next_action
@@ -475,8 +475,8 @@ class BackwardsViewTDLambda(RLFunctions):
 
     def __init__(
         self, env, alpha:float = 0.3, gamma:float = 0.9, lambda_:float = 0.2, 
-        starting_state=(2,0), num_of_epochs:int = 1_000, num_episodes =10_000,
-        plot_name='BV-TD(Lambda)', reward = -1):
+        starting_state:tuple = (2,0), num_of_epochs:int = 1_000, num_episodes:int = 10_000,
+        reward:int = -1, plot_name='BV-TD(Lambda)'):
         """
         """
         super().__init__()
@@ -539,7 +539,7 @@ class BackwardsViewTDLambda(RLFunctions):
             self.env.grid[grid_state]=state_values[state_values.states == grid_state].state_value
                 
 
-class Sarsa_Lambda(TemporalDifferenceFunctions):
+class SarsaLambda(TemporalDifferenceFunctions):
     """ 
     SARSA Algorithm that utilizes the lambda target instead of the TD target.
     Trace vector can be set as either accumulating or replacing. 
@@ -551,9 +551,9 @@ class Sarsa_Lambda(TemporalDifferenceFunctions):
 
     def __init__(
             self, env, alpha:float = 0.5, gamma:float = 0.9, lambda_:float = 0.5, 
-            epsilon:bool = 0.1, replacing_traces:bool = False, starting_state = (2,0), 
-            num_of_epochs:int = 1_000, num_episodes = 10_000, plot_name = 'Sarsa_Lambda', 
-            reward = -1):
+            epsilon:float = 0.1, replacing_traces:bool = False, starting_state:tuple = (2,0), 
+            num_of_epochs:int = 1_000, num_episodes:int = 10_000, reward:int = -1,
+            plot_name:str = 'Sarsa_Lambda'):
         """
         """
         super().__init__()
@@ -594,7 +594,7 @@ class Sarsa_Lambda(TemporalDifferenceFunctions):
 
     
 
-class Watkins_Q(TemporalDifferenceFunctions): # AKA Q Learning Lambda.
+class WatkinsQ(TemporalDifferenceFunctions): # AKA Q Learning Lambda.
     """ 
     Q Learning algorithm that utilizes the lambda target instead of the TD target.
     Policy is epsilon-greedy. 
@@ -605,9 +605,9 @@ class Watkins_Q(TemporalDifferenceFunctions): # AKA Q Learning Lambda.
 
     def __init__(
             self, env, alpha:float = 0.5, gamma:float = 0.9, lambda_:float = 0.5, 
-            epsilon:bool = 0.1, replacing_traces:bool = False, starting_state = (2,0), 
-            num_of_epochs:int = 1_000, num_episodes = 10_000, plot_name = 'Watkins Q', 
-            reward = -1):
+            epsilon:float = 0.1, replacing_traces:bool = False, starting_state:tuple = (2,0), 
+            num_of_epochs:int = 1_000, num_episodes:int = 10_000, reward:int = -1,
+            plot_name:str = 'Watkins Q', ):
         """
         """
         super().__init__()
@@ -645,7 +645,6 @@ class Watkins_Q(TemporalDifferenceFunctions): # AKA Q Learning Lambda.
     def compute_state_value(self, plot_name='SARSA-Lambda'):
         self.logger.info('Compute Watkins Q')
         self.td_control(algo=self.watkins_Q_formula, plot_name=plot_name, lambda_target=True)
-
 
 
 
