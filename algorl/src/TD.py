@@ -551,7 +551,7 @@ class SarsaLambda(TemporalDifferenceFunctions):
 
     def __init__(
             self, env, alpha:float = 0.5, gamma:float = 0.9, lambda_:float = 0.5, 
-            epsilon:float = 0.1, replacing_traces:bool = False, starting_state:tuple = (2,0), 
+            epsilon:float = 0.2, replacing_traces:bool = False, starting_state:tuple = (2,0), 
             num_of_epochs:int = 1_000, num_episodes:int = 10_000, reward:int = -1,
             plot_name:str = 'Sarsa_Lambda'):
         """
@@ -624,7 +624,7 @@ class WatkinsQ(TemporalDifferenceFunctions): # AKA Q Learning Lambda.
         self.reward = reward
         self.logger.info('Watkins Q initialized')
 
-    def watkins_Q_formula(self, q_values_df, eligibility_df, state, action, reward, next_state, next_action):
+    def watkins_Q_formula(self, q_values_df, eligibility_df, state, action, reward, next_state, _):
         # Increment the eligibility trace. 
         if self.replacing_traces == True:
             eligibility_df.at[state, action] += 1
@@ -645,6 +645,3 @@ class WatkinsQ(TemporalDifferenceFunctions): # AKA Q Learning Lambda.
     def compute_state_value(self, plot_name='SARSA-Lambda'):
         self.logger.info('Compute Watkins Q')
         self.td_control(algo=self.watkins_Q_formula, plot_name=plot_name, lambda_target=True)
-
-
-
